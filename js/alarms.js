@@ -206,31 +206,190 @@ function selectAlarm(aID, oName) {
 }
 
 // === Зареждане на архив при отваряне на модала ===
-function loadArchive(oRec, sID, oNum, zTime) {
-    $('#archiveContent').html(`<div class="text-center text-muted py-3">
-        <i class="fa-solid fa-spinner fa-spin"></i> Зареждане на архив...
-    </div>`);
+//function loadArchive(oRec, sID, oNum, zTime) {
+//    $('#archiveContent').html(`<div class="text-center text-muted py-3">
+//        <i class="fa-solid fa-spinner fa-spin"></i> Зареждане на архив...
+//    </div>`);
+//
+//    $.ajax({
+//        url: 'system/get_object_archiv.php',
+//        method: 'GET',
+//        data: { oRec, sID, oNum, zTime },
+//        success: function (html) {
+//            $('#archiveContent').html(html);
+//        },
+//        error: function () {
+//            $('#archiveContent').html(`
+//                <div class="alert alert-danger">
+//                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Грешка при зареждане на архива.
+//                </div>
+//            `);
+//        }
+//    });
+//}
+//
+//function openArchiveModal(oRec, sID, oNum, zTime) {
+//    loadArchive(oRec, sID, oNum, zTime);
+//    const modalEl = document.getElementById('modalArchive');
+//    const modal = new bootstrap.Modal(modalEl);
+//    modal.show();
+//}
+// =========================
+// 📚 Архивна секция под картата с автообновяване и статус
+// =========================
+
+let archiveInterval = null;
+let lastArchiveUpdate = null;
+let archiveParams = {};
+
+function toggleArchiveSection(oRec, sID, oNum, zTime) {
+    const section = document.getElementById('archiveSection');
+
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        archiveParams = { oRec, sID, oNum, zTime };
+        loadArchiveContent();
+
+        // стартира автоматично презареждане
+        archiveInterval = setInterval(() => {
+            loadArchiveContent();
+        }, 10000);
+
+        // стартираме и таймер за визуализация на изминалото време
+        setInterval(updateArchiveTimer, 1000);
+
+    } else {
+        section.style.display = 'none';
+        clearInterval(archiveInterval);
+    }
+}
+
+function loadArchiveContent() {
+    const content = document.getElementById('archiveContent');
+    const statusText = document.getElementById('archiveStatusText');
+    const statusIcon = document.getElementById('archiveStatusIcon');
+
+    statusIcon.classList.remove('text-danger');
+    statusIcon.classList.add('text-warning');
+    statusText.textContent = 'Обновяване...';
 
     $.ajax({
         url: 'system/get_object_archiv.php',
         method: 'GET',
-        data: { oRec, sID, oNum, zTime },
-        success: function (html) {
-            $('#archiveContent').html(html);
+        data: {
+            oRec: archiveParams.oRec,
+            sID: archiveParams.sID,
+            oNum: archiveParams.oNum,
+            zTime: archiveParams.zTime,
+            listSize: 720,
+            listLimit: 20
+        },
+        success: function (response) {
+            content.innerHTML = response.trim()
+                ? response
+                : '<div class="text-center text-muted py-2">Няма архивни данни.</div>';
+            lastArchiveUpdate = new Date();
+            statusIcon.classList.remove('text-warning', 'text-danger');
+            statusIcon.classList.add('text-success');
+            updateArchiveTimer();
         },
         error: function () {
-            $('#archiveContent').html(`
-                <div class="alert alert-danger">
-                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Грешка при зареждане на архива.
-                </div>
-            `);
+            content.innerHTML = '<div class="text-center text-danger py-2">Грешка при зареждане на архива.</div>';
+            statusIcon.classList.remove('text-success', 'text-warning');
+            statusIcon.classList.add('text-danger');
+            statusText.textContent = 'Грешка при обновяване';
         }
     });
 }
 
-function openArchiveModal(oRec, sID, oNum, zTime) {
-    loadArchive(oRec, sID, oNum, zTime);
-    const modalEl = document.getElementById('modalArchive');
-    const modal = new bootstrap.Modal(modalEl);
+function updateArchiveTimer() {
+    const statusText = document.getElementById('archiveStatusText');
+    if (!lastArchiveUpdate) return;
+
+    const diff = Math.floor((new Date() - lastArchiveUpdate) / 1000);
+    const secs = diff % 60;
+    const mins = Math.floor(diff / 60);
+    const timeStr = mins > 0
+        ? `Обновено преди ${mins}м ${secs}с`
+        : `Обновено преди ${secs}с`;
+
+    statusText.textContent = `✓ ${timeStr}`;
+}
+
+// Ръчно обновяване с бутона ⟳
+function manualRefreshArchive() {
+    loadArchiveContent();
+}
+
+let map;
+let objectMarker;
+let carMarker;
+let updateInterval;
+
+function openMapModal(oLat, oLan, idUser) {
+    const modal = new bootstrap.Modal(document.getElementById('modalMap'));
     modal.show();
+
+    setTimeout(() => {
+        initMap(oLat, oLan, idUser);
+    }, 400); // Изчакваме малко, за да се визуализира модала преди инициализацията
+}
+
+function initMap(oLat, oLan, idUser) {
+    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
+
+    map = new google.maps.Map(document.getElementById('mapContainer'), {
+        center: objectPos,
+        zoom: 14,
+        mapId: "DEMO_MAP_ID",
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    });
+
+    // 🏠 Маркер за обекта
+    objectMarker = new google.maps.Marker({
+        position: objectPos,
+        map: map,
+        title: "Обект",
+        icon: {
+            url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+        }
+    });
+
+    // 🚗 Маркер за автомобила
+    carMarker = new google.maps.Marker({
+        position: objectPos, // първоначално на същото място
+        map: map,
+        title: "Екип",
+        icon: {
+            url: "https://maps.google.com/mapfiles/kml/shapes/cabs.png",
+            scaledSize: new google.maps.Size(40, 40)
+        }
+    });
+
+    // 🔄 Обновяване на позицията на автомобила на всеки 10 секунди
+    clearInterval(updateInterval);
+    updateInterval = setInterval(() => updateCarPosition(idUser), 10000);
+    updateCarPosition(idUser);
+}
+
+function updateCarPosition(idUser) {
+    $.ajax({
+        url: 'system/get_geo_position.php',
+        method: 'GET',
+        data: { idUser },
+        success: function(response) {
+            if (!response) return;
+            try {
+                const [lat, lon] = response.trim().split(',').map(parseFloat);
+                const newPos = { lat, lng: lon };
+                carMarker.setPosition(newPos);
+                map.panTo(newPos);
+            } catch (e) {
+                console.warn('Грешка при обновяване на позицията:', e);
+            }
+        },
+        error: function() {
+            console.error('Грешка при извличане на позиция.');
+        }
+    });
 }
