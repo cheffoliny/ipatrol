@@ -114,48 +114,53 @@ function diffBadge($timeDiff)
         <small>[<?= substr($rTime, 10, 10) ?>]</small>
     </div>
 </div>
-
 <!-- Детайли за обекта -->
 <div class="card bg-dark text-white border-secondary">
     <div class="card-header d-flex justify-content-between align-items-center">
         <b><?= htmlspecialchars($oNum).' - '.htmlspecialchars($oName) ?></b>
-        <div><!-- get_object_archiv( $oRec, $sID, $oNum, $zTime, 720, 20 ); -->
-            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject"><i class="fa-solid fa-house"></i></button>
-           <button class="btn btn-sm btn-primary" onclick="loadArchive(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')"
-                   data-bs-toggle="modal" data-bs-target="#modalArchive">
-               <i class="fa-solid fa-book"></i>
-           </button>
-       <button class="btn btn-sm btn-primary"
-               onclick="openArchiveModal(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
-           <i class="fa-solid fa-book"></i>
-       </button>
+        <div>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject">
+                <i class="fa-solid fa-house"></i>
+            </button>
+
+            <!-- 🗺️ Нов бутон за карта -->
+            <button class="btn btn-sm btn-success"
+                    onclick="openMapModal(<?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
+                <i class="fa-solid fa-car"></i>
+            </button>
+
+            <button class="btn btn-sm btn-primary"
+                    onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
+                <i class="fa-solid fa-book"></i>
+            </button>
+
         </div>
     </div>
+
     <div class="card-body p-2">
         <p><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($oAddr) ?></p>
         <p><?= htmlspecialchars($oPlace) ?></p>
         <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
     </div>
-</div>
 
-<!-- Модал за архив -->
-<div class="modal fade h-75" id="modalArchive" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content bg-dark text-white">
-            <div class="modal-header border-secondary">
-                <h6 class="modal-title">Архив</h6>
+    <!-- 📚 Видима секция за архив -->
+    <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <small class="text-info">
+                <i class="fa-solid fa-circle fa-xs me-1 text-success" id="archiveStatusIcon"></i>
+                <span id="archiveStatusText">Зареждане...</span>
+            </small>
+            <button class="btn btn-sm btn-outline-light py-0 px-2" onclick="manualRefreshArchive()">⟳</button>
+        </div>
 
-                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-1" id="archiveContent">
-                <div class="text-center text-muted py-3">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
-                </div>
-            </div>
+        <div id="archiveContent" class="text-center text-muted py-3">
+            <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
         </div>
     </div>
+
 </div>
 
+<!-- Модалът за обекта остава -->
 <div class="modal fade" id="modalObject" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content bg-dark text-white">
@@ -165,6 +170,21 @@ function diffBadge($timeDiff)
             </div>
             <div class="modal-body p-1">
                 <?php get_object_faces($oID); ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🗺️ Модал за Google карта -->
+<div class="modal fade" id="modalMap" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h6 class="modal-title"><i class="fa-solid fa-map-location-dot"></i> Локация на обект и екип</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="mapContainer" style="width:100%;height:500px;"></div>
             </div>
         </div>
     </div>
