@@ -7,7 +7,7 @@ if (!$_SESSION['user_id']) {
     exit('Access denied.');
 }
 
-$idUser = intval($_SESSION['id_person'] ?? 0);
+$idUser = intval($_SESSION['user_id'] ?? 0);
 if ($idUser === 0) {
     exit('');
 }

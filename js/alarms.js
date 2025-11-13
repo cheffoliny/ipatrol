@@ -3,14 +3,13 @@
 // --- Глобални променливи ---
 let alarmSound = null;
 let alarmActive = false;
-let soundEnabled = true; // звукът по подразбиране е активен
+let soundEnabled = true;
 let isAndroidWebView = false;
 let isDesktopBrowser = false;
 
-// --- Засичане на платформата ---
+// --- Засичане на среда ---
 function detectEnvironment() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
-
     if (/Android/i.test(ua) && /wv/.test(ua)) {
         isAndroidWebView = true;
         console.log('📱 Android WebView');
@@ -21,7 +20,7 @@ function detectEnvironment() {
 }
 detectEnvironment();
 
-// --- Извикване на Android метод ---
+// --- Звук за Android ---
 function callAndroidSound(state) {
     try {
         if (typeof Android !== 'undefined' && typeof Android.playSoundAlarm === 'function') {
@@ -36,7 +35,7 @@ function callAndroidSound(state) {
     }
 }
 
-// --- Инициализация на звука за браузър ---
+// --- Звук за браузър ---
 function initBrowserSound() {
     if (!alarmSound) {
         alarmSound = new Audio('sounds/alarm.mp3');
@@ -45,140 +44,84 @@ function initBrowserSound() {
     }
 }
 
-// --- Разрешаване на звука при първо взаимодействие (браузър) ---
 if (isDesktopBrowser) {
     document.addEventListener('click', initBrowserSound, { once: true });
     document.addEventListener('keydown', initBrowserSound, { once: true });
 }
 
-// --- Показване на визуален индикатор ---
+// --- Алармен индикатор ---
 function showAlarmIndicator() {
-    let el = document.getElementById('alarmIndicator');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'alarmIndicator';
-        el.innerHTML = `
-            <div style="
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: red;
-                color: white;
-                font-size: 2rem;
-                border-radius: 50%;
-                width: 70px;
-                height: 70px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                box-shadow: 0 0 20px red;
-                z-index: 9999;
-                animation: pulse 1s infinite;
-            ">🚨</div>
-        `;
-        document.body.appendChild(el);
-
-        const style = document.createElement('style');
-        style.innerHTML = `
-            @keyframes pulse {
-                0% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1.3); opacity: 0.6; }
-                100% { transform: scale(1); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    el.classList.add('active');
+    if (document.getElementById('alarmIndicator')) return;
+    const el = document.createElement('div');
+    el.id = 'alarmIndicator';
+    el.innerHTML = `
+        <div style="
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: red;
+            color: white;
+            font-size: 2rem;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px red;
+            z-index: 9999;
+            animation: pulse 1s infinite;
+        ">🚨</div>
+    `;
+    document.body.appendChild(el);
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.6; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
     alarmActive = true;
 }
 
-// --- Скриване на индикатора ---
 function hideAlarmIndicator() {
     const el = document.getElementById('alarmIndicator');
     if (el) el.remove();
     alarmActive = false;
 }
 
-// --- Стартиране на аларма ---
+// --- Звук ---
 function triggerAlarmSound() {
     if (!soundEnabled) return;
     showAlarmIndicator();
-
-    if (isAndroidWebView) {
-        callAndroidSound(1);
-    } else if (alarmSound) {
-        alarmSound.play().catch(err => console.warn('🔇 Play error:', err));
-    }
+    if (isAndroidWebView) callAndroidSound(1);
+    else if (alarmSound) alarmSound.play().catch(e => console.warn('🔇 Play error:', e));
 }
 
-// --- Спиране на аларма ---
 function stopAlarmSound() {
     hideAlarmIndicator();
-
-    if (isAndroidWebView) {
-        callAndroidSound(0);
-    } else if (alarmSound && !alarmSound.paused) {
+    if (isAndroidWebView) callAndroidSound(0);
+    else if (alarmSound && !alarmSound.paused) {
         alarmSound.pause();
         alarmSound.currentTime = 0;
     }
 }
 
-// --- Обновяване на алармите ---
+// --- Обновяване на аларми ---
 function updateAlarms(data) {
     $('#alarmPanel').html(data);
-
     const hasActiveAlarm = $('#alarmPanel .bg-danger, #alarmPanel .alarm-new').length > 0;
-
-    if (hasActiveAlarm && !alarmActive) {
-        triggerAlarmSound();
-    } else if (!hasActiveAlarm && alarmActive) {
-        stopAlarmSound();
-    }
+    if (hasActiveAlarm && !alarmActive) triggerAlarmSound();
+    else if (!hasActiveAlarm && alarmActive) stopAlarmSound();
 }
 
 // --- Избор на аларма ---
-function selectAlarm(aID) {
-    $.ajax({
-        url: 'system/update_alarm.php',
-        method: 'POST',
-        data: { aID: aID },
-        dataType: 'json',
-        success: function(res) {
-            if (res.status === 'success') {
-                const li = $('#alarm-' + aID);
-                li.removeClass('bg-danger alarm-new').addClass('bg-success');
-                stopAlarmSound();
-            } else {
-                console.warn(res.msg);
-            }
-        },
-        error: function() {
-            console.error('Грешка при update на алармата');
-        }
-    });
-}
-
-// --- Ръчен бутон за звук ---
-$(document).ready(function () {
-    $('#toggleSoundBtn').on('click', function () {
-        soundEnabled = !soundEnabled;
-        const icon = soundEnabled ? 'fa-volume-high' : 'fa-volume-xmark';
-        const text = soundEnabled ? 'Звук: Вкл.' : 'Звук: Изкл.';
-
-        $(this).html(`<i class="fa-solid ${icon} me-1"></i> ${text}`);
-
-        // Ако е изключен звукът — спираме и активната аларма
-        if (!soundEnabled && alarmActive) stopAlarmSound();
-    });
-});
-
-// --- Избор на аларма (зареждане в main-content) ---
 function selectAlarm(aID, oName) {
-    // Визуален ефект при избор
     $('#alarmPanel li').removeClass('active');
     $('#alarm-' + aID).addClass('active');
 
-    // Зареждане на съдържанието в main-content
     $('.main-content').html(`
         <div class="text-center py-5 text-muted">
             <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br>Зареждане на данните за ${oName}...
@@ -191,8 +134,6 @@ function selectAlarm(aID, oName) {
         data: { aID: aID },
         success: function (html) {
             $('.main-content').html(html);
-
-            // след зареждане на подробностите — спираме алармения звук
             stopAlarmSound();
         },
         error: function () {
@@ -205,74 +146,43 @@ function selectAlarm(aID, oName) {
     });
 }
 
-// === Зареждане на архив при отваряне на модала ===
-//function loadArchive(oRec, sID, oNum, zTime) {
-//    $('#archiveContent').html(`<div class="text-center text-muted py-3">
-//        <i class="fa-solid fa-spinner fa-spin"></i> Зареждане на архив...
-//    </div>`);
-//
-//    $.ajax({
-//        url: 'system/get_object_archiv.php',
-//        method: 'GET',
-//        data: { oRec, sID, oNum, zTime },
-//        success: function (html) {
-//            $('#archiveContent').html(html);
-//        },
-//        error: function () {
-//            $('#archiveContent').html(`
-//                <div class="alert alert-danger">
-//                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Грешка при зареждане на архива.
-//                </div>
-//            `);
-//        }
-//    });
-//}
-//
-//function openArchiveModal(oRec, sID, oNum, zTime) {
-//    loadArchive(oRec, sID, oNum, zTime);
-//    const modalEl = document.getElementById('modalArchive');
-//    const modal = new bootstrap.Modal(modalEl);
-//    modal.show();
-//}
-// =========================
-// 📚 Архивна секция под картата с автообновяване и статус
-// =========================
+// --- Управление на звук бутона ---
+$(document).ready(function () {
+    $('#toggleSoundBtn').on('click', function () {
+        soundEnabled = !soundEnabled;
+        const icon = soundEnabled ? 'fa-volume-high' : 'fa-volume-xmark';
+        const text = soundEnabled ? 'Звук: Вкл.' : 'Звук: Изкл.';
+        $(this).html(`<i class="fa-solid ${icon} me-1"></i> ${text}`);
+        if (!soundEnabled && alarmActive) stopAlarmSound();
+    });
+});
+
+// =============================
+// 📚 Архив / Карта в една секция
+// =============================
 
 let archiveInterval = null;
-let lastArchiveUpdate = null;
+let mapInterval = null;
 let archiveParams = {};
+let map = null;
+let carMarker = null;
 
 function toggleArchiveSection(oRec, sID, oNum, zTime) {
-    const section = document.getElementById('archiveSection');
+    clearInterval(mapInterval);
+    $('#archiveSection').show().html(`
+        <div class="text-center text-muted py-3">
+            <i class="fa-solid fa-spinner fa-spin"></i> Зареждане на архив...
+        </div>
+    `);
 
-    if (section.style.display === 'none') {
-        section.style.display = 'block';
-        archiveParams = { oRec, sID, oNum, zTime };
-        loadArchiveContent();
+    archiveParams = { oRec, sID, oNum, zTime };
+    loadArchiveContent();
 
-        // стартира автоматично презареждане
-        archiveInterval = setInterval(() => {
-            loadArchiveContent();
-        }, 10000);
-
-        // стартираме и таймер за визуализация на изминалото време
-        setInterval(updateArchiveTimer, 1000);
-
-    } else {
-        section.style.display = 'none';
-        clearInterval(archiveInterval);
-    }
+    if (archiveInterval) clearInterval(archiveInterval);
+    archiveInterval = setInterval(loadArchiveContent, 10000);
 }
 
 function loadArchiveContent() {
-    const content = document.getElementById('archiveContent');
-    const statusText = document.getElementById('archiveStatusText');
-    const statusIcon = document.getElementById('archiveStatusIcon');
-
-    statusIcon.classList.remove('text-danger');
-    statusIcon.classList.add('text-warning');
-    statusText.textContent = 'Обновяване...';
-
     $.ajax({
         url: 'system/get_object_archiv.php',
         method: 'GET',
@@ -284,80 +194,39 @@ function loadArchiveContent() {
             listSize: 720,
             listLimit: 20
         },
-        success: function (response) {
-            content.innerHTML = response.trim()
-                ? response
-                : '<div class="text-center text-muted py-2">Няма архивни данни.</div>';
-            lastArchiveUpdate = new Date();
-            statusIcon.classList.remove('text-warning', 'text-danger');
-            statusIcon.classList.add('text-success');
-            updateArchiveTimer();
+        success: function (html) {
+            $('#archiveSection').html(html || '<div class="text-center text-muted py-3">Няма архивни данни.</div>');
         },
         error: function () {
-            content.innerHTML = '<div class="text-center text-danger py-2">Грешка при зареждане на архива.</div>';
-            statusIcon.classList.remove('text-success', 'text-warning');
-            statusIcon.classList.add('text-danger');
-            statusText.textContent = 'Грешка при обновяване';
+            $('#archiveSection').html('<div class="text-center text-danger py-3">Грешка при зареждане на архива.</div>');
         }
     });
 }
 
-function updateArchiveTimer() {
-    const statusText = document.getElementById('archiveStatusText');
-    if (!lastArchiveUpdate) return;
+// === Карта в същата секция ===
+function openMapSection(oLat, oLan, idUser) {
+    clearInterval(archiveInterval);
+    $('#archiveSection').show().html(`
+        <div id="mapContainer" style="height: 500px; border-radius: 10px;"></div>
+    `);
 
-    const diff = Math.floor((new Date() - lastArchiveUpdate) / 1000);
-    const secs = diff % 60;
-    const mins = Math.floor(diff / 60);
-    const timeStr = mins > 0
-        ? `Обновено преди ${mins}м ${secs}с`
-        : `Обновено преди ${secs}с`;
-
-    statusText.textContent = `✓ ${timeStr}`;
-}
-
-// Ръчно обновяване с бутона ⟳
-function manualRefreshArchive() {
-    loadArchiveContent();
-}
-
-let map;
-let objectMarker;
-let carMarker;
-let updateInterval;
-
-function openMapModal(oLat, oLan, idUser) {
-    const modal = new bootstrap.Modal(document.getElementById('modalMap'));
-    modal.show();
-
-    setTimeout(() => {
-        initMap(oLat, oLan, idUser);
-    }, 400); // Изчакваме малко, за да се визуализира модала преди инициализацията
-}
-
-function initMap(oLat, oLan, idUser) {
     const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
 
     map = new google.maps.Map(document.getElementById('mapContainer'), {
         center: objectPos,
         zoom: 14,
-        mapId: "DEMO_MAP_ID",
         mapTypeId: google.maps.MapTypeId.ROADMAP
     });
 
-    // 🏠 Маркер за обекта
-    objectMarker = new google.maps.Marker({
+    new google.maps.Marker({
         position: objectPos,
         map: map,
         title: "Обект",
-        icon: {
-            url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-        }
+        icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
     });
 
-    // 🚗 Маркер за автомобила
     carMarker = new google.maps.Marker({
-        position: objectPos, // първоначално на същото място
+        position: objectPos,
         map: map,
         title: "Екип",
         icon: {
@@ -366,10 +235,8 @@ function initMap(oLat, oLan, idUser) {
         }
     });
 
-    // 🔄 Обновяване на позицията на автомобила на всеки 10 секунди
-    clearInterval(updateInterval);
-    updateInterval = setInterval(() => updateCarPosition(idUser), 10000);
     updateCarPosition(idUser);
+    mapInterval = setInterval(() => updateCarPosition(idUser), 10000);
 }
 
 function updateCarPosition(idUser) {
@@ -377,19 +244,15 @@ function updateCarPosition(idUser) {
         url: 'system/get_geo_position.php',
         method: 'GET',
         data: { idUser },
-        success: function(response) {
+        success: function (response) {
             if (!response) return;
-            try {
-                const [lat, lon] = response.trim().split(',').map(parseFloat);
-                const newPos = { lat, lng: lon };
-                carMarker.setPosition(newPos);
-                map.panTo(newPos);
-            } catch (e) {
-                console.warn('Грешка при обновяване на позицията:', e);
-            }
+            const [lat, lon] = response.trim().split(',').map(parseFloat);
+            const newPos = { lat, lng: lon };
+            if (carMarker) carMarker.setPosition(newPos);
+            if (map) map.panTo(newPos);
         },
-        error: function() {
-            console.error('Грешка при извличане на позиция.');
+        error: function () {
+            console.warn('Грешка при обновяване на позицията.');
         }
     });
 }
