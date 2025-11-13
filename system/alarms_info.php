@@ -86,7 +86,7 @@ function diffBadge($timeDiff)
 ?>
 
 <!-- ================= HTML изход ================= -->
-<div class="row mb-2" style="height: 15vh;">
+<div class="row mb-2">
     <div class="col p-2 m-1 text-white <?= ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between">
             <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
@@ -113,37 +113,38 @@ function diffBadge($timeDiff)
 </div>
 
 <!-- Детайли за обекта -->
-<div class="card bg-dark text-white border-secondary" style="height: 75vh;">
+<div class="card bg-dark text-white border-secondary" style="height: 77vh;">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <b><?= htmlspecialchars($oNum).' - '.htmlspecialchars($oName) ?></b>
-        <div>
-            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject">
-                <i class="fa-solid fa-house"></i>
-            </button>
-
-            <!-- 🚗 бутон за карта -->
-            <button class="btn btn-sm btn-success"
-                    onclick="openMapSection(<?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
-                <i class="fa-solid fa-car"></i>
-            </button>
-
-            <button class="btn btn-sm btn-primary"
-                    onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
-                <i class="fa-solid fa-book"></i>
-            </button>
-
+        <div class="row h-10 overflow-auto px-0 mx-0" style="height: 10vh;">
+            <div class="col-9 p-0 m-0">
+                <div class="w-100 text-nowrap overflow-hidden">
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject">
+                        <i class="fa-solid fa-house"></i>
+                    </button><?= htmlspecialchars($oName) ?>
+                </div>
+                <!-- 🚗 бутон за карта -->
+                <div class="w-100 text-nowrap overflow-hidden">
+                    <button class="btn btn-sm btn-success"
+                        onclick="openMapSection(<?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
+                        <i class="fa-solid fa-car"></i>
+                    </button><?= htmlspecialchars($oAddr) ?>
+                </div>
+                <div class="w-100 text-nowrap overflow-hidden">
+                    <button class="btn btn-sm btn-primary"
+                        onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
+                        <i class="fa-solid fa-book"></i>
+                    </button><?= htmlspecialchars($oPlace) ?>
+                </div>
+            </div>
+            <div class="col overflow-auto px-1 py-0 m-0 border-start">
+                <div class="h-100 small m-0 p-0"><?= $oInfo ?></div>
+            </div>
         </div>
     </div>
 
-    <div class="card-body p-2">
-        <p><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($oAddr) ?></p>
-        <p><?= htmlspecialchars($oPlace) ?></p>
-        <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
-    </div>
-
     <!-- 🧩 Динамична секция (архив или карта) -->
-    <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2 h-75 overflow-auto" >
-        <div id="dynamicContent" class="text-center text-muted py-3">
+    <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-1 mt-1 h-75 overflow-auto" >
+        <div id="dynamicContent" class="text-center text-muted py-1">
             <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
         </div>
     </div>
