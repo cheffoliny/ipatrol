@@ -1,6 +1,5 @@
 <div class="sidebar d-flex flex-column justify-content-between bg-dark text-white p-1" style="width: 250px;">
     <div style="height: 80vh !important;">
-        <h4 class="mb-3"><i class="fa-solid fa-shield-halved me-2"></i> iPatrol</h4>
 
         <!-- Контрол за звук -->
         <div class="text-center mb-3">
