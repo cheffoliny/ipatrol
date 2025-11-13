@@ -1,12 +1,6 @@
-<div class="sidebar d-flex flex-column justify-content-between bg-dark text-white" style="width: 250px; padding: 1rem;">
-    <div>
+<div class="sidebar d-flex flex-column justify-content-between bg-dark text-white p-1" style="width: 250px;">
+    <div style="height: 80vh !important;">
         <h4 class="mb-3"><i class="fa-solid fa-shield-halved me-2"></i> iPatrol</h4>
-        <hr class="border-light">
-
-        <!-- Статус на връзката -->
-        <div id="connStatus" class="text-center my-3">
-            <div class="text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Проверка...</div>
-        </div>
 
         <!-- Контрол за звук -->
         <div class="text-center mb-3">
@@ -18,8 +12,12 @@
         <!-- Панел с аларми -->
         <ul id="alarmPanel" class="list-group h-50 m-0 p-0 overflow-auto"></ul>
     </div>
-
-    <div class="text-center fixed-bottom">
+    <hr class="border-light">
+    <!-- Статус на връзката -->
+    <div id="connStatus" class="text-center my-3">
+        <div class="text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Проверка...</div>
+    </div>
+    <div class="text-center">
         <a href="logout.php" class="btn btn-danger w-100 mt-3">
             <i class="fa-solid fa-right-from-bracket me-1"></i> Изход
         </a>

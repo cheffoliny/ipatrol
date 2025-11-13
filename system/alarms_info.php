@@ -86,7 +86,7 @@ function diffBadge($timeDiff)
 ?>
 
 <!-- ================= HTML изход ================= -->
-<div class="row mb-2">
+<div class="row mb-2" style="height: 15vh;">
     <div class="col p-2 m-1 text-white <?= ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between">
             <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
@@ -113,7 +113,7 @@ function diffBadge($timeDiff)
 </div>
 
 <!-- Детайли за обекта -->
-<div class="card bg-dark text-white border-secondary">
+<div class="card bg-dark text-white border-secondary" style="height: 80vh;">
     <div class="card-header d-flex justify-content-between align-items-center">
         <b><?= htmlspecialchars($oNum).' - '.htmlspecialchars($oName) ?></b>
         <div>
@@ -142,7 +142,7 @@ function diffBadge($timeDiff)
     </div>
 
     <!-- 🧩 Динамична секция (архив или карта) -->
-    <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:none;">
+    <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2 h-75 overflow-auto" >
         <div id="dynamicContent" class="text-center text-muted py-3">
             <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
         </div>
@@ -163,116 +163,3 @@ function diffBadge($timeDiff)
         </div>
     </div>
 </div>
-
-<!-- ============ JS секция ============
-// let map, objectMarker, carMarker, lastPosition = null, updateInterval = null;
-//
-// // 📚 Архив
-// function showArchiveSection(oRec, sID, oNum, zTime) {
-//     clearInterval(updateInterval);
-//     $("#dynamicSection").show();
-//     $("#dynamicContent").html(`<div class='text-center text-muted py-3'><i class='fa-solid fa-spinner fa-spin'></i> Зареждане...</div>`);
-//     loadArchive(oRec, sID, oNum, zTime);
-//     updateInterval = setInterval(() => loadArchive(oRec, sID, oNum, zTime), 10000);
-// }
-//
-// // 🗺️ Карта
-// function showMapSection(oLat, oLan, idUser) {
-//     clearInterval(updateInterval);
-//     $("#dynamicSection").show();
-//     $("#dynamicContent").html(`<div id="mapContainer" style="height:400px; border-radius:10px;"></div>`);
-//     setTimeout(() => initMap(oLat, oLan, idUser), 300);
-// }
-//
-// // 🗺️ Инициализация на картата
-// function initMap(oLat, oLan, idUser) {
-//     const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
-//     map = new google.maps.Map(document.getElementById('mapContainer'), {
-//         center: objectPos,
-//         zoom: 15,
-//         mapTypeId: google.maps.MapTypeId.ROADMAP
-//     });
-//
-//     objectMarker = new google.maps.Marker({
-//         position: objectPos,
-//         map: map,
-//         title: "Обект",
-//         icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
-//     });
-//
-//     carMarker = new google.maps.Marker({
-//         position: objectPos,
-//         map: map,
-//         title: "Екип",
-//         icon: {
-//             url: "https://maps.google.com/mapfiles/kml/shapes/cabs.png",
-//             scaledSize: new google.maps.Size(40, 40)
-//         }
-//     });
-//
-//     lastPosition = objectPos;
-//     updateCarPosition(idUser);
-//     updateInterval = setInterval(() => updateCarPosition(idUser), 10000);
-// }
-//
-// // 🔄 Позиция на автомобила
-// function updateCarPosition(idUser) {
-//     $.ajax({
-//         url: 'ajax/get_geo_position.php',
-//         method: 'GET',
-//         data: { idUser },
-//         success: function(response) {
-//             if (!response) return;
-//             try {
-//                 const [lat, lon] = response.trim().split(',').map(parseFloat);
-//                 animateCarMovement({ lat, lng: lon });
-//             } catch (e) {
-//                 console.warn("Грешка при обновяване на координати:", e);
-//             }
-//         }
-//     });
-// }
-//
-// // 🚗 Анимация на автомобила
-// function animateCarMovement(newPos) {
-//     if (!lastPosition) {
-//         lastPosition = newPos;
-//         carMarker.setPosition(newPos);
-//         map.panTo(newPos);
-//         return;
-//     }
-//
-//     const frames = 50;
-//     const duration = 2000;
-//     let frame = 0;
-//     const deltaLat = (newPos.lat - lastPosition.lat) / frames;
-//     const deltaLng = (newPos.lng - lastPosition.lng) / frames;
-//
-//     const animation = setInterval(() => {
-//         frame++;
-//         const lat = lastPosition.lat + deltaLat * frame;
-//         const lng = lastPosition.lng + deltaLng * frame;
-//         const pos = { lat, lng };
-//         carMarker.setPosition(pos);
-//         map.panTo(pos);
-//         if (frame >= frames) {
-//             clearInterval(animation);
-//             lastPosition = newPos;
-//         }
-//     }, duration / frames);
-// }
-//
-// // 📚 Зареждане на архив
-// function loadArchive(oRec, sID, oNum, zTime) {
-//     $.ajax({
-//         url: "ajax/load_archive.php",
-//         data: { oRec, sID, oNum, zTime },
-//         success: function(data) {
-//             $("#dynamicContent").html(data);
-//         },
-//         error: function() {
-//             $("#dynamicContent").html("<div class='text-danger p-2'>Грешка при зареждане.</div>");
-//         }
-//     });
-// }
- -->
