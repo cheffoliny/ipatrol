@@ -16,10 +16,10 @@
         </div>
 
         <!-- Панел с аларми -->
-        <ul id="alarmPanel" class="list-group m-0 p-0"></ul>
+        <ul id="alarmPanel" class="list-group h-50 m-0 p-0 overflow-auto"></ul>
     </div>
 
-    <div class="text-center mt-auto">
+    <div class="text-center fixed-bottom">
         <a href="logout.php" class="btn btn-danger w-100 mt-3">
             <i class="fa-solid fa-right-from-bracket me-1"></i> Изход
         </a>
