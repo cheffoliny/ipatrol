@@ -113,7 +113,7 @@ function diffBadge($timeDiff)
 </div>
 
 <!-- Детайли за обекта -->
-<div class="card bg-dark text-white border-secondary" style="height: 80vh;">
+<div class="card bg-dark text-white border-secondary" style="height: 75vh;">
     <div class="card-header d-flex justify-content-between align-items-center">
         <b><?= htmlspecialchars($oNum).' - '.htmlspecialchars($oName) ?></b>
         <div>

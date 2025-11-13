@@ -30,7 +30,7 @@ if (empty($_SESSION['user_id'])) {
 <div class="d-flex" style="height: 100vh;">
     <?php include 'partials/sidebar.php'; ?>
 
-    <div class="main-content bg-dark p-1">
+    <div class="main-content bg-dark px-1">
         <h2>Няма регистрирани аларми, <?= htmlspecialchars($_SESSION['first_name']); ?>!</h2>
     </div>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
