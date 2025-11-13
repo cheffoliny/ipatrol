@@ -13,7 +13,7 @@
     </div>
     <hr class="border-light">
     <!-- Статус на връзката -->
-    <div id="connStatus" class="text-center my-3">
+    <div id="connStatus" class="text-center my-1">
         <div class="text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Проверка...</div>
     </div>
     <div class="text-center">
