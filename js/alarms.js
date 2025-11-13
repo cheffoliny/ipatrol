@@ -168,6 +168,7 @@ let updateInterval;
 
 // 🗺️ Функция за отваряне на картата в #archiveSection
 function openMapSection(oLat, oLan, idUser) {
+alert(oLat + ' / ' + oLan + ' / ' + idUser)
     const section = document.getElementById('archiveSection');
     section.style.display = 'block';
     section.innerHTML = `
@@ -246,6 +247,43 @@ function updateCarPosition(idUser) {
         },
         error: function() {
             console.error('Грешка при извличане на позиция.');
+        }
+    });
+}
+
+// === toggleArchiveSection ===
+// Зарежда архивни записи в #archiveSection
+function toggleArchiveSection(oRec, sID, oNum, zTime) {
+    const section = document.getElementById('archiveSection');
+    if (!section) {
+        console.error('❌ Липсва елемент #archiveSection');
+        return;
+    }
+
+    section.innerHTML = `
+        <div class="text-center py-3 text-muted">
+            <i class="fa-solid fa-spinner fa-spin"></i> Зареждане на архив...
+        </div>
+    `;
+
+    $.ajax({
+        url: 'system/archive_section.php',
+        method: 'GET',
+        data: {
+            oRec: oRec,
+            sID: sID,
+            oNum: oNum,
+            zTime: zTime
+        },
+        success: function (html) {
+            section.innerHTML = html;
+        },
+        error: function () {
+            section.innerHTML = `
+                <div class="alert alert-danger m-3">
+                    ⚠️ Грешка при зареждане на архивните данни.
+                </div>
+            `;
         }
     });
 }
