@@ -20,8 +20,8 @@ $id_person = intval($_SESSION["user_id"]);
 $lat = str_replace(',', '.', $_POST['lat']);
 $lng = str_replace(',', '.', $_POST['lng']);
 
-$lat = number_format((float)$lat, 8, '.', '');
-$lng = number_format((float)$lng, 8, '.', '');
+//$lat = number_format((float)$lat, 8, '.', '');
+//$lng = number_format((float)$lng, 8, '.', '');
 
 $accuracy = isset($_POST['accuracy']) ? floatval($_POST['accuracy']) : -1;
 $speed    = isset($_POST['speed']) ? floatval($_POST['speed']) : -1;
