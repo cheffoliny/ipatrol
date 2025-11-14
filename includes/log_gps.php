@@ -14,8 +14,15 @@ global $db_sod;
 $id_person = intval($_SESSION["user_id"]);
 
 // Получаване на данните
-$lat      = isset($_POST['lat']) ? floatval($_POST['lat']) : null;
-$lng      = isset($_POST['lng']) ? floatval($_POST['lng']) : null;
+//$lat      = isset($_POST['lat']) ? $_POST['lat'] : null;
+//$lng      = isset($_POST['lng']) ? $_POST['lng'] : null;
+
+$lat = str_replace(',', '.', $_POST['lat']);
+$lng = str_replace(',', '.', $_POST['lng']);
+
+$lat = number_format((float)$lat, 8, '.', '');
+$lng = number_format((float)$lng, 8, '.', '');
+
 $accuracy = isset($_POST['accuracy']) ? floatval($_POST['accuracy']) : -1;
 $speed    = isset($_POST['speed']) ? floatval($_POST['speed']) : -1;
 $bearing  = isset($_POST['bearing']) ? floatval($_POST['bearing']) : -1;
@@ -27,7 +34,7 @@ if ($lat === null || $lng === null) {
 }
 
 // Ensure format lat,lng
-$geo_data = $lat . ',' . $lng;
+$geo_data = $lat.','. $lng;
 $geo_source = "android_webview";
 
 /* ------------------------------
