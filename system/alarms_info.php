@@ -131,7 +131,6 @@ function diffBadge($timeDiff)
                     onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
                 <i class="fa-solid fa-book"></i>
             </button>
-
         </div>
     </div>
 
