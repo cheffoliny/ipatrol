@@ -194,7 +194,7 @@ alert(oLat + ' / ' + oLan + ' / ' + idUser)
 // 🗺️ Инициализация на картата
 function initMap(oLat, oLan, idUser) {
     const section = document.getElementById('archiveSection');
-    section.innerHTML = `<div id="mapContainer" style="width:100%;height:500px;"></div>`;
+    section.innerHTML = `<div id="mapContainer" style="width:100%;height:550px;"></div>`;
 
     const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
     map = new google.maps.Map(document.getElementById('mapContainer'), {
