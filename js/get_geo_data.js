@@ -4,11 +4,17 @@ function requestGPS() {
     }
 }
 
-// Android callback → получаваме всички данни
+// Android callback — тук идват данните от WebView
 function receiveGPS(lat, lng, acc, speed, bearing, altitude) {
 
     console.log("GPS:", {lat, lng, acc, speed, bearing, altitude});
 
+    // 1) Обновяваме маркера на картата в реално време
+    if (typeof updateCarPositionFromWebView === "function") {
+        updateCarPositionFromWebView(parseFloat(lat), parseFloat(lng));
+    }
+
+    // 2) Запис в MySQL
     $.post("includes/log_gps.php", {
         lat: lat,
         lng: lng,

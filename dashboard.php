@@ -14,7 +14,6 @@ if (empty($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <title>iPatrol Dashboard</title>
-    <script src="js/get_geo_data.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -39,7 +38,7 @@ if (empty($_SESSION['user_id'])) {
     <script src="scripts/sidebar.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJCSAQPKRrx7XlFccO_EkFqzZ74-EcA8o"></script>
     <script src="js/alarms.js"></script>
-
+    <script src="js/get_geo_data.js"></script>
 </div>
 </body>
 </html>

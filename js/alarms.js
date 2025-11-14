@@ -205,35 +205,6 @@ function selectAlarm(aID, oName) {
     });
 }
 
-// === Зареждане на архив при отваряне на модала ===
-//function loadArchive(oRec, sID, oNum, zTime) {
-//    $('#archiveContent').html(`<div class="text-center text-muted py-3">
-//        <i class="fa-solid fa-spinner fa-spin"></i> Зареждане на архив...
-//    </div>`);
-//
-//    $.ajax({
-//        url: 'system/get_object_archiv.php',
-//        method: 'GET',
-//        data: { oRec, sID, oNum, zTime },
-//        success: function (html) {
-//            $('#archiveContent').html(html);
-//        },
-//        error: function () {
-//            $('#archiveContent').html(`
-//                <div class="alert alert-danger">
-//                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Грешка при зареждане на архива.
-//                </div>
-//            `);
-//        }
-//    });
-//}
-//
-//function openArchiveModal(oRec, sID, oNum, zTime) {
-//    loadArchive(oRec, sID, oNum, zTime);
-//    const modalEl = document.getElementById('modalArchive');
-//    const modal = new bootstrap.Modal(modalEl);
-//    modal.show();
-//}
 // =========================
 // 📚 Архивна секция под картата с автообновяване и статус
 // =========================
@@ -392,4 +363,21 @@ function updateCarPosition(idUser) {
             console.error('Грешка при извличане на позиция.');
         }
     });
+}
+
+// === НОВО: Обновяване на позицията от WebView ===
+function updateCarPositionFromWebView(lat, lng) {
+
+    if (!carMarker || !map) {
+        console.warn("Map or carMarker not initialized yet.");
+        return;
+    }
+
+    const newPos = { lat: lat, lng: lng };
+
+    // Местим маркера
+    carMarker.setPosition(newPos);
+
+    // Плавно движение на картата
+    map.panTo(newPos);
 }
