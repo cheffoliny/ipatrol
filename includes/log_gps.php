@@ -109,7 +109,7 @@ function distanceHaversine($lat1, $lon1, $lat2, $lon2) {
 -------------------------------------*/
 
 function logError($db, $id_person, $message) {
-    $sql = "INSERT INTO geo_error_log (id_person, error_message, time) VALUES (?, ?, NOW())";
+    $sql = "INSERT INTO geo_error_log ( id_person, error_message, time ) VALUES (?, ?, NOW())";
     $stmt = $db->prepare($sql);
     $stmt->execute([$id_person, $message]);
 }
