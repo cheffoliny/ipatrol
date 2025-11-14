@@ -13,7 +13,7 @@ $aID = intval($_GET['aID'] ?? 0);
 $alarm_status = $_GET['alarm_status'] ?? '';
 $alarm_reason = intval($_GET['alarm_reason'] ?? 0);
 $alarm_reason2 = intval($_GET['alarm_reason2'] ?? 0);
-$idUser = intval($_SESSION['uid'] ?? 0);
+$idUser = intval($_SESSION['user_id'] ?? 0);
 
 if ($aID === 0) {
     exit('<div class="alert alert-warning">Невалиден идентификатор на аларма.</div>');
@@ -113,37 +113,38 @@ function diffBadge($timeDiff)
 </div>
 
 <!-- Детайли за обекта -->
-<div class="card bg-dark text-white border-secondary">
+<div class="card bg-dark text-white border-secondary" style="height: 77vh;">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <b><?= htmlspecialchars($oNum).' - '.htmlspecialchars($oName) ?></b>
-        <div>
-            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject">
-                <i class="fa-solid fa-house"></i>
-            </button>
-
-            <!-- 🚗 бутон за карта -->
-            <button class="btn btn-sm btn-success"
-                    onclick="openMapSection(<?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
-                <i class="fa-solid fa-car"></i>
-            </button>
-
-            <button class="btn btn-sm btn-primary"
-                    onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
-                <i class="fa-solid fa-book"></i>
-            </button>
-
+        <div class="row h-10 overflow-auto px-0 mx-0" style="height: 10vh;">
+            <div class="col-9 p-0 m-0">
+                <div class="w-100 text-nowrap overflow-hidden">
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject">
+                        <i class="fa-solid fa-house"></i>
+                    </button><?= htmlspecialchars($oName) ?>
+                </div>
+                <!-- 🚗 бутон за карта -->
+                <div class="w-100 text-nowrap overflow-hidden">
+                    <button class="btn btn-sm btn-success"
+                        onclick="openMapSection(<?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
+                        <i class="fa-solid fa-car"></i>
+                    </button><?= htmlspecialchars($oAddr) ?>
+                </div>
+                <div class="w-100 text-nowrap overflow-hidden">
+                    <button class="btn btn-sm btn-primary"
+                        onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
+                        <i class="fa-solid fa-book"></i>
+                    </button><?= htmlspecialchars($oPlace) ?>
+                </div>
+            </div>
+            <div class="col overflow-auto px-1 py-0 m-0 border-start">
+                <div class="h-100 small m-0 p-0"><?= $oInfo ?></div>
+            </div>
         </div>
     </div>
 
-    <div class="card-body p-2">
-        <p><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($oAddr) ?></p>
-        <p><?= htmlspecialchars($oPlace) ?></p>
-        <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
-    </div>
-
     <!-- 🧩 Динамична секция (архив или карта) -->
-    <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:none;">
-        <div id="dynamicContent" class="text-center text-muted py-3">
+    <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-1 mt-1 h-75 overflow-auto" >
+        <div id="dynamicContent" class="text-center text-muted py-1">
             <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
         </div>
     </div>
@@ -163,116 +164,3 @@ function diffBadge($timeDiff)
         </div>
     </div>
 </div>
-
-<!-- ============ JS секция ============
-// let map, objectMarker, carMarker, lastPosition = null, updateInterval = null;
-//
-// // 📚 Архив
-// function showArchiveSection(oRec, sID, oNum, zTime) {
-//     clearInterval(updateInterval);
-//     $("#dynamicSection").show();
-//     $("#dynamicContent").html(`<div class='text-center text-muted py-3'><i class='fa-solid fa-spinner fa-spin'></i> Зареждане...</div>`);
-//     loadArchive(oRec, sID, oNum, zTime);
-//     updateInterval = setInterval(() => loadArchive(oRec, sID, oNum, zTime), 10000);
-// }
-//
-// // 🗺️ Карта
-// function showMapSection(oLat, oLan, idUser) {
-//     clearInterval(updateInterval);
-//     $("#dynamicSection").show();
-//     $("#dynamicContent").html(`<div id="mapContainer" style="height:400px; border-radius:10px;"></div>`);
-//     setTimeout(() => initMap(oLat, oLan, idUser), 300);
-// }
-//
-// // 🗺️ Инициализация на картата
-// function initMap(oLat, oLan, idUser) {
-//     const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
-//     map = new google.maps.Map(document.getElementById('mapContainer'), {
-//         center: objectPos,
-//         zoom: 15,
-//         mapTypeId: google.maps.MapTypeId.ROADMAP
-//     });
-//
-//     objectMarker = new google.maps.Marker({
-//         position: objectPos,
-//         map: map,
-//         title: "Обект",
-//         icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
-//     });
-//
-//     carMarker = new google.maps.Marker({
-//         position: objectPos,
-//         map: map,
-//         title: "Екип",
-//         icon: {
-//             url: "https://maps.google.com/mapfiles/kml/shapes/cabs.png",
-//             scaledSize: new google.maps.Size(40, 40)
-//         }
-//     });
-//
-//     lastPosition = objectPos;
-//     updateCarPosition(idUser);
-//     updateInterval = setInterval(() => updateCarPosition(idUser), 10000);
-// }
-//
-// // 🔄 Позиция на автомобила
-// function updateCarPosition(idUser) {
-//     $.ajax({
-//         url: 'ajax/get_geo_position.php',
-//         method: 'GET',
-//         data: { idUser },
-//         success: function(response) {
-//             if (!response) return;
-//             try {
-//                 const [lat, lon] = response.trim().split(',').map(parseFloat);
-//                 animateCarMovement({ lat, lng: lon });
-//             } catch (e) {
-//                 console.warn("Грешка при обновяване на координати:", e);
-//             }
-//         }
-//     });
-// }
-//
-// // 🚗 Анимация на автомобила
-// function animateCarMovement(newPos) {
-//     if (!lastPosition) {
-//         lastPosition = newPos;
-//         carMarker.setPosition(newPos);
-//         map.panTo(newPos);
-//         return;
-//     }
-//
-//     const frames = 50;
-//     const duration = 2000;
-//     let frame = 0;
-//     const deltaLat = (newPos.lat - lastPosition.lat) / frames;
-//     const deltaLng = (newPos.lng - lastPosition.lng) / frames;
-//
-//     const animation = setInterval(() => {
-//         frame++;
-//         const lat = lastPosition.lat + deltaLat * frame;
-//         const lng = lastPosition.lng + deltaLng * frame;
-//         const pos = { lat, lng };
-//         carMarker.setPosition(pos);
-//         map.panTo(pos);
-//         if (frame >= frames) {
-//             clearInterval(animation);
-//             lastPosition = newPos;
-//         }
-//     }, duration / frames);
-// }
-//
-// // 📚 Зареждане на архив
-// function loadArchive(oRec, sID, oNum, zTime) {
-//     $.ajax({
-//         url: "ajax/load_archive.php",
-//         data: { oRec, sID, oNum, zTime },
-//         success: function(data) {
-//             $("#dynamicContent").html(data);
-//         },
-//         error: function() {
-//             $("#dynamicContent").html("<div class='text-danger p-2'>Грешка при зареждане.</div>");
-//         }
-//     });
-// }
- -->
