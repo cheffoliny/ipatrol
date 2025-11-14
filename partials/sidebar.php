@@ -1,4 +1,4 @@
-<div class="sidebar d-flex flex-column justify-content-between bg-dark text-white p-1" style="width: 250px;">
+<div class="sidebar d-flex flex-column justify-content-between bg-dark text-white p-1" style="width: 200px;">
     <div class="h-75 overflow-auto">
         <!-- Панел с аларми -->
         <ul id="alarmPanel" class="list-group h-100 m-0 p-0"></ul>
