@@ -1,36 +1,58 @@
 // js/get_geo_data.js
 
 (function(){
-    // Expose to global (for debugging / fallback)
     window.__lastGps = null;
 
     function requestGPS() {
-        if (typeof Android !== "undefined") {
-            Android.requestGPS();
+        if (typeof Android !== "undefined" && typeof Android.requestGPS === "function") {
+            try {
+                Android.requestGPS(); // Android ще извика обратно window.receiveGPS(...)
+                console.log("JS -> Android.requestGPS() called");
+            } catch (e) {
+                console.warn("Error calling Android.requestGPS()", e);
+            }
         } else {
-            // Could optionally try browser geolocation as fallback
-            console.warn("Android interface not available");
+            // Fallback: try browser geolocation (optional)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    const acc = pos.coords.accuracy || -1;
+                    const speed = pos.coords.speed || -1;
+                    const bearing = pos.coords.heading || 0;
+                    const altitude = pos.coords.altitude || -1;
+                    window.receiveGPS(lat, lng, acc, speed, bearing, altitude);
+                }, function(err){
+                    console.warn("Browser geolocation error", err);
+                }, {maximumAge: 5000, timeout: 3000});
+            } else {
+                console.warn("Android interface not available and geolocation not supported");
+            }
         }
     }
 
     // Android callback — всички данни
     window.receiveGPS = function(lat, lng, acc, speed, bearing, altitude) {
+        // normalize numbers
         lat = parseFloat(lat);
         lng = parseFloat(lng);
-        acc = (acc !== undefined) ? parseFloat(acc) : -1;
-        speed = (speed !== undefined) ? parseFloat(speed) : -1;
-        bearing = (bearing !== undefined) ? parseFloat(bearing) : 0;
-        altitude = (altitude !== undefined) ? parseFloat(altitude) : null;
+        acc = (acc !== undefined && acc !== null) ? parseFloat(acc) : -1;
+        speed = (speed !== undefined && speed !== null) ? parseFloat(speed) : -1;
+        bearing = (bearing !== undefined && bearing !== null) ? parseFloat(bearing) : 0;
+        altitude = (altitude !== undefined && altitude !== null) ? parseFloat(altitude) : -1;
 
-        // Save last locally (fallback)
         window.__lastGps = { lat, lng, acc, speed, bearing, altitude, ts: Date.now() };
 
-        // 1) Update map marker immediately (if map is open)
+        // update map instantly if function exists
         if (typeof window.updateCarFromWebView === "function") {
-            window.updateCarFromWebView(lat, lng, speed, bearing, acc, altitude);
+            try {
+                window.updateCarFromWebView(lat, lng, speed, bearing, acc, altitude);
+            } catch (e) {
+                console.warn("updateCarFromWebView error", e);
+            }
         }
 
-        // 2) POST to server log
+        // POST to server (path relative to site root; adjust if needed)
         try {
             $.post("includes/log_gps.php", {
                 lat: lat,
@@ -39,9 +61,10 @@
                 speed: speed,
                 bearing: bearing,
                 altitude: altitude
-            }).fail(function() {
-                // Optional: push to localStorage queue for retry
-                console.warn("Failed to POST GPS to server");
+            }).done(function(resp) {
+                console.log("log_gps response:", resp);
+            }).fail(function(xhr, status, err) {
+                console.warn("Failed to POST GPS to server", status, err);
             });
         } catch (e) {
             console.error("Error posting GPS", e);

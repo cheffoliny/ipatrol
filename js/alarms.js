@@ -294,98 +294,6 @@ function manualRefreshArchive() {
     loadArchiveContent();
 }
 
-//let map;
-//let objectMarker;
-let carMarker;
-//let updateInterval;
-
-//function openMapModal(oLat, oLan, idUser) {
-//    const modal = new bootstrap.Modal(document.getElementById('modalMap'));
-//    modal.show();
-//
-//    setTimeout(() => {
-//        initMap(oLat, oLan, idUser);
-//    }, 400); // Изчакваме малко, за да се визуализира модала преди инициализацията
-//}
-
-//function initMap(oLat, oLan, idUser) {
-//    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
-//
-//    map = new google.maps.Map(document.getElementById('mapContainer'), {
-//        center: objectPos,
-//        zoom: 14,
-//        mapId: "DEMO_MAP_ID",
-//        mapTypeId: google.maps.MapTypeId.ROADMAP
-//    });
-//
-//    // 🏠 Маркер за обекта
-//    objectMarker = new google.maps.Marker({
-//        position: objectPos,
-//        map: map,
-//        title: "Обект",
-//        icon: {
-//            url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-//        }
-//    });
-//
-//    // 🚗 Маркер за автомобила
-//    carMarker = new google.maps.Marker({
-//        position: objectPos, // първоначално на същото място
-//        map: map,
-//        title: "Екип",
-//        icon: {
-//            url: "https://maps.google.com/mapfiles/kml/shapes/cabs.png",
-//            scaledSize: new google.maps.Size(40, 40)
-//        }
-//    });
-//
-//    // 🔄 Обновяване на позицията на автомобила на всеки 10 секунди
-//    clearInterval(updateInterval);
-//    updateInterval = setInterval(() => updateCarPosition(idUser), 10000);
-//    updateCarPosition(idUser);
-//}
-//
-//function updateCarPosition(idUser) {
-//    $.ajax({
-//        url: 'system/get_geo_position.php',
-//        method: 'GET',
-//        data: { idUser },
-//        success: function(response) {
-//            if (!response) return;
-//            try {
-//                const [lat, lon] = response.trim().split(',').map(parseFloat);
-//                const newPos = { lat, lng: lon };
-//                carMarker.setPosition(newPos);
-//                map.panTo(newPos);
-//            } catch (e) {
-//                console.warn('Грешка при обновяване на позицията:', e);
-//            }
-//        },
-//        error: function() {
-//            console.error('Грешка при извличане на позиция.');
-//        }
-//    });
-//}
-//
-//// === НОВО: Обновяване на позицията от WebView ===
-//function updateCarPositionFromWebView(lat, lng) {
-//
-//    if (!carMarker || !map) {
-//        console.warn("Map or carMarker not initialized yet.");
-//        return;
-//    }
-//
-//    const newPos = { lat: lat, lng: lng };
-//
-//    // Местим маркера
-//    carMarker.setPosition(newPos);
-//
-//    // Плавно движение на картата
-//    map.panTo(newPos);
-//}
-//
-
-
 
 let map;
 let objectMarker;
@@ -508,7 +416,7 @@ function initMap(oLat, oLan, idUser) {
         map = new google.maps.Map(document.getElementById('mapContainer'), {
             center: objectPos,
             zoom: 14,
-            mapId: "DEMO_MAP_ID",
+            mapId: "INTELLI_MAP_ID",
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             gestureHandling: 'greedy'
         });

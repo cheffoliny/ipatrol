@@ -1,4 +1,6 @@
 <?php
+
+define('INCLUDE_CHECK', true);
 require_once '../session_init.php';
 require_once '../config.php';
 
@@ -7,7 +9,7 @@ if (!$_SESSION['user_id']) {
     exit('Access denied.');
 }
 
-$idUser = intval($_SESSION['id_person'] ?? 0);
+$idUser = intval($_GET['idUser'] ?? 0);
 if ($idUser === 0) {
     exit('');
 }

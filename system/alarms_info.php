@@ -14,7 +14,7 @@ $aID = intval($_GET['aID'] ?? 0);
 $alarm_status = $_GET['alarm_status'] ?? '';
 $alarm_reason = intval($_GET['alarm_reason'] ?? 0);
 $alarm_reason2 = intval($_GET['alarm_reason2'] ?? 0);
-$idUser = intval($_SESSION['uid'] ?? 0);
+$idUser = intval($_SESSION['user_id'] ?? 0);
 
 if ($aID === 0) {
     exit('<div class="alert alert-warning">Невалиден идентификатор на аларма.</div>');
