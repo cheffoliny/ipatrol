@@ -67,11 +67,11 @@ if (!$num_aRows) {
         <li id='alarm-$aID' class='$strClass'
             onclick='selectAlarm($aID, \"$oName\")'>
             <div class='fw-bold'>$oName</div>
-            <div class='small text-white-50'>$oAddr</div>
             <div class='mt-1'><i class='fa-solid fa-bell me-1'></i> $aTime</div>
         </li>";
     }
 }
+//          <div class='small text-white-50'>$oAddr</div>
 
 // --- Ако има нови аларми, изпращаме флаг ---
 // if ($hasNewAlarm) {
