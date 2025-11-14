@@ -23,10 +23,10 @@ detectEnvironment();
 // --- Звук за Android ---
 function callAndroidSound(state) {
     try {
-        if (typeof Android !== 'undefined' && typeof Android.playSoundAlarm === 'function') {
-            Android.playSoundAlarm(state);
-        } else if (typeof playSoundAlarm === 'function') {
-            playSoundAlarm(state);
+        if (typeof IntelliSOD !== 'undefined' && typeof IntelliSOD.playSound === 'function') {
+            IntelliSOD.playSound(state);
+        } else if (typeof playSound === 'function') {
+            playSound(state);
         } else {
             console.warn('⚠️ Няма Android метод за звук.');
         }
@@ -157,74 +157,61 @@ $(document).ready(function () {
     });
 });
 
-// =============================
-// 📚 Архив / Карта в една секция
-// =============================
 
-let archiveInterval = null;
-let mapInterval = null;
-let archiveParams = {};
-let map = null;
-let carMarker = null;
 
-function toggleArchiveSection(oRec, sID, oNum, zTime) {
-    clearInterval(mapInterval);
-    $('#archiveSection').show().html(`
-        <div class="text-center text-muted py-3">
-            <i class="fa-solid fa-spinner fa-spin"></i> Зареждане на архив...
-        </div>
-    `);
 
-    archiveParams = { oRec, sID, oNum, zTime };
-    loadArchiveContent();
+// === Google Maps секция ===
+let map;
+let objectMarker;
+let carMarker;
+let updateInterval;
 
-    if (archiveInterval) clearInterval(archiveInterval);
-    archiveInterval = setInterval(loadArchiveContent, 10000);
-}
-
-function loadArchiveContent() {
-    $.ajax({
-        url: 'system/get_object_archiv.php',
-        method: 'GET',
-        data: {
-            oRec: archiveParams.oRec,
-            sID: archiveParams.sID,
-            oNum: archiveParams.oNum,
-            zTime: archiveParams.zTime,
-            listSize: 720,
-            listLimit: 20
-        },
-        success: function (html) {
-            $('#archiveSection').html(html || '<div class="text-center text-muted py-3">Няма архивни данни.</div>');
-        },
-        error: function () {
-            $('#archiveSection').html('<div class="text-center text-danger py-3">Грешка при зареждане на архива.</div>');
-        }
-    });
-}
-
-// === Карта в същата секция ===
+// 🗺️ Функция за отваряне на картата в #archiveSection
 function openMapSection(oLat, oLan, idUser) {
-    clearInterval(archiveInterval);
-    $('#archiveSection').show().html(`
-        <div id="mapContainer" style="height: 500px; border-radius: 10px;"></div>
-    `);
+alert(oLat + ' / ' + oLan + ' / ' + idUser)
+    const section = document.getElementById('archiveSection');
+    section.style.display = 'block';
+    section.innerHTML = `
+        <div class="text-center py-3 text-muted">
+            <i class="fa-solid fa-spinner fa-spin"></i> Зареждане на картата...
+        </div>
+    `;
+
+    // Изчакваме да се зареди Google Maps
+    if (window.googleMapsLoaded) {
+        initMap(oLat, oLan, idUser);
+    } else {
+        console.log('⏳ Изчакваме Google Maps API...');
+        const checkInterval = setInterval(() => {
+            if (window.googleMapsLoaded) {
+                clearInterval(checkInterval);
+                initMap(oLat, oLan, idUser);
+            }
+        }, 500);
+    }
+}
+
+// 🗺️ Инициализация на картата
+function initMap(oLat, oLan, idUser) {
+    const section = document.getElementById('archiveSection');
+    section.innerHTML = `<div id="mapContainer" style="width:100%;height:550px;"></div>`;
 
     const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
-
     map = new google.maps.Map(document.getElementById('mapContainer'), {
         center: objectPos,
         zoom: 14,
         mapTypeId: google.maps.MapTypeId.ROADMAP
     });
 
-    new google.maps.Marker({
+    // 🏠 Маркер за обекта
+    objectMarker = new google.maps.Marker({
         position: objectPos,
         map: map,
         title: "Обект",
         icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
     });
 
+    // 🚗 Маркер за автомобила
     carMarker = new google.maps.Marker({
         position: objectPos,
         map: map,
@@ -235,24 +222,68 @@ function openMapSection(oLat, oLan, idUser) {
         }
     });
 
+    // 🔄 Автоматично обновяване на позицията на всеки 10 секунди
+    clearInterval(updateInterval);
+    updateInterval = setInterval(() => updateCarPosition(idUser), 10000);
     updateCarPosition(idUser);
-    mapInterval = setInterval(() => updateCarPosition(idUser), 10000);
 }
 
+// 🚘 Обновяване на позицията на автомобила
 function updateCarPosition(idUser) {
     $.ajax({
         url: 'system/get_geo_position.php',
         method: 'GET',
         data: { idUser },
-        success: function (response) {
+        success: function(response) {
             if (!response) return;
-            const [lat, lon] = response.trim().split(',').map(parseFloat);
-            const newPos = { lat, lng: lon };
-            if (carMarker) carMarker.setPosition(newPos);
-            if (map) map.panTo(newPos);
+            try {
+                const [lat, lon] = response.trim().split(',').map(parseFloat);
+                const newPos = { lat, lng: lon };
+                carMarker.setPosition(newPos);
+                map.panTo(newPos);
+            } catch (e) {
+                console.warn('Грешка при обновяване на позицията:', e);
+            }
+        },
+        error: function() {
+            console.error('Грешка при извличане на позиция.');
+        }
+    });
+}
+
+// === toggleArchiveSection ===
+// Зарежда архивни записи в #archiveSection
+function toggleArchiveSection(oRec, sID, oNum, zTime) {
+    const section = document.getElementById('archiveSection');
+    if (!section) {
+        console.error('❌ Липсва елемент #archiveSection');
+        return;
+    }
+
+    section.innerHTML = `
+        <div class="text-center py-3 text-muted">
+            <i class="fa-solid fa-spinner fa-spin"></i> Зареждане на архив...
+        </div>
+    `;
+
+    $.ajax({
+        url: 'system/archive_section.php',
+        method: 'GET',
+        data: {
+            oRec: oRec,
+            sID: sID,
+            oNum: oNum,
+            zTime: zTime
+        },
+        success: function (html) {
+            section.innerHTML = html;
         },
         error: function () {
-            console.warn('Грешка при обновяване на позицията.');
+            section.innerHTML = `
+                <div class="alert alert-danger m-3">
+                    ⚠️ Грешка при зареждане на архивните данни.
+                </div>
+            `;
         }
     });
 }
