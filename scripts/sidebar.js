@@ -55,31 +55,3 @@ $(document).ready(function() {
     setInterval(checkConnection, 3000);
     setInterval(loadAlarms, 5000);
 });
-
-//function loadAlarms() {
-//    $.ajax({
-//        url: 'system/get_alarms.php',
-//        method: 'GET',
-//        success: function(data) {
-//            $('#alarmPanel').html(data);
-//        },
-//        error: function() {
-//            $('#alarmPanel').html(`
-//                <li class="list-group-item bg-danger text-white">
-//                    <i class="fa-solid fa-circle-exclamation me-1"></i>
-//                    Грешка при зареждане на алармите!
-//                </li>
-//            `);
-//        }
-//    });
-//}
-//// function loadAlarms() {
-////        $('#alarmsList').load('system/get_alarms.php');
-//// }
-//// === Инициализация ===
-//$(document).ready(function() {
-//    checkConnection();
-//    loadAlarms();
-//    setInterval(checkConnection, 3000); // Проверка на връзката на всеки 30 сек.
-//    setInterval(loadAlarms, 5000);        // Презареждане на алармите на всеки 5 сек.
-//});
