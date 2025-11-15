@@ -22,8 +22,3 @@
         </a>
     </div>
 </div>
-
-<!-- Скриптове
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="scripts/sidebar.js"></script>
-<script src="js/alarms.js"></script> -->
