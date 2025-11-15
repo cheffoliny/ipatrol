@@ -705,7 +705,7 @@ function openMapModal(modalId, oLat, oLan, idUser) {
 /* ------------------------
    initMapUnique: create a standalone map instance inside given container
    This avoids sharing global overlays between different modals/objects.
-   ------------------------ */
+------------------------ */
 function initMapUnique(containerId, oLat, oLan, idUser) {
     if (typeof google === 'undefined' || !google.maps) {
         console.error('Google Maps API not available in initMapUnique');
