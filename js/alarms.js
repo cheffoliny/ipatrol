@@ -265,205 +265,316 @@ function manualRefreshArchive() {
 }
 
 // =========================
-// Google Map + Car Visualization (per-modal isolated logic)
+// Google Map + Car Visualization
 // =========================
+let map;
+let objectMarker;
+let carOverlay;
+let carPosition = null;
+let trailPolyline;
+let trailPoints = [];
+let trailMaxPoints = 500;
+let heatmap;
+let heatmapPoints = [];
+let updateInterval;
+let lastAnimation = null;
 
-// Всички карти за различни обекти се държат отделно
-const MAP_INSTANCES = {};          // key = modalId → { map, objectMarker, carOverlay, polyline, trail, heatmap, lastPos }
-const TRAIL_MAX_POINTS = 500;
-
-
-// --- Car Overlay class ---
+// --- Car Overlay class (HTML marker)
 class CarOverlay extends google.maps.OverlayView {
     constructor(position, map, options = {}) {
         super();
         this.position = position;
         this.map = map;
+        this.div = null;
         this.speed = options.speed || 0;
         this.bearing = options.bearing || 0;
-
-        this.div = null;
+        this.acc = options.acc || -1;
+        this.altitude = options.altitude || null;
         this.setMap(map);
     }
-
     onAdd() {
-        this.div = document.createElement("div");
-        this.div.className = "car-marker";
+        this.div = document.createElement('div');
+        this.div.className = 'car-marker';
 
-        // Car SVG
-        const car = document.createElement("div");
-        car.innerHTML = `
-            <svg viewBox="0 0 32 32" width="28" height="28">
-                <path d="M16 2 L26 14 L26 26 L6 26 L6 14 Z" fill="#ff4444" stroke="#660000" stroke-width="1"/>
-            </svg>`;
-        this.carEl = car;
-        this.div.appendChild(car);
+        const shadow = document.createElement('div');
+        shadow.className = 'shadow';
+        shadow.style.background = 'radial-gradient(circle at 30% 30%, rgba(0,0,0,0.4), rgba(0,0,0,0))';
+        shadow.style.width = '48px';
+        shadow.style.height = '48px';
+        this.div.appendChild(shadow);
+
+        const speedBadge = document.createElement('div');
+        speedBadge.className = 'speed-badge';
+        speedBadge.innerText = this.speed > 0 ? Math.round(this.speed*3.6)+' km/h' : '';
+        this.div.appendChild(speedBadge);
+        this.speedBadgeEl = speedBadge;
+
+        const carSvg = document.createElement('div');
+        carSvg.className = 'car-shape';
+        carSvg.innerHTML = `
+            <svg viewBox="0 0 64 64" width="34" height="34" xmlns="http://www.w3.org/2000/svg">
+              <g>
+                <path d="M32 4 L44 24 L44 44 L20 44 L20 24 Z" fill="#2b8cff" stroke="#003a8c" stroke-width="1"/>
+                <circle cx="24" cy="48" r="3" fill="#222" />
+                <circle cx="40" cy="48" r="3" fill="#222" />
+              </g>
+            </svg>
+        `;
+        this.carSvgEl = carSvg;
+        this.div.appendChild(carSvg);
 
         const panes = this.getPanes();
         panes.overlayMouseTarget.appendChild(this.div);
     }
-
     draw() {
-        if (!this.div) return;
+        if(!this.div) return;
         const projection = this.getProjection();
-        if (!projection) return;
-
-        const posPixel = projection.fromLatLngToDivPixel(this.position);
-        if (!posPixel) return;
-
-        this.div.style.left = (posPixel.x - 14) + "px";
-        this.div.style.top = (posPixel.y - 14) + "px";
+        if(!projection) return;
+        const pos = projection.fromLatLngToDivPixel(this.position);
+        if(!pos) return;
+        this.div.style.left = (pos.x - 24) + 'px';
+        this.div.style.top = (pos.y - 24) + 'px';
         this.div.style.transform = `rotate(${this.bearing}deg)`;
+        if(this.speedBadgeEl){
+            this.speedBadgeEl.innerText = this.speed>0 ? Math.round(this.speed*3.6)+' km/h':'';
+        }
     }
-
-    update(newPos, opts = {}) {
-        if (newPos) this.position = newPos;
-        if (opts.speed !== undefined) this.speed = opts.speed;
-        if (opts.bearing !== undefined) this.bearing = opts.bearing;
-
-        this.draw();
+    update(position, opts={}) {
+        if(position) this.position = position;
+        if(opts.speed!==undefined) this.speed = opts.speed;
+        if(opts.bearing!==undefined) this.bearing = opts.bearing;
+        if(opts.acc!==undefined) this.acc = opts.acc;
+        if(opts.altitude!==undefined) this.altitude = opts.altitude;
+        if(this.div) this.draw();
     }
-
     onRemove() {
-        if (this.div && this.div.parentNode)
+        if(this.div && this.div.parentNode){
             this.div.parentNode.removeChild(this.div);
-
-        this.div = null;
+            this.div = null;
+        }
     }
 }
 
+// --- Modal events patch ---
+const modalMapEl = document.getElementById('modalMap');
+modalMapEl.addEventListener('hidden.bs.modal', () => {
+    if(carOverlay){ carOverlay.setMap(null); carOverlay = null; }
+    if(trailPolyline){ trailPolyline.setMap(null); trailPolyline = null; }
+    if(heatmap){ heatmap.setMap(null); heatmap = null; }
+    carPosition = null;
+    trailPoints = [];
+    heatmapPoints = [];
+});
 
-// =============================
-// OPEN MODAL FOR SPECIFIC OBJECT
-// =============================
+modalMapEl.addEventListener('shown.bs.modal', () => {
+    if(window.__pendingMapInit){
+        const {oLat,oLan,idUser} = window.__pendingMapInit;
+        initMap(oLat,oLan,idUser);
+        window.__pendingMapInit = null;
+    }
+});
+
+// --- Open Map Modal ---
 function openMapModal(modalId, oLat, oLan, idUser) {
+
     const modalEl = document.getElementById(modalId);
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
 
-    const containerId = "mapContainer_" + modalId;
+    const containerId = "mapContainer_" + modalId.replace("modalMap", "");
 
+    // Изчакваме Bootstrap да отвори модала (важно!)
     setTimeout(() => {
-        initMapForObject(modalId, containerId, oLat, oLan, idUser);
+        initMapUnique(containerId, oLat, oLan, idUser);
     }, 350);
 }
 
+function initMapUnique(containerId, oLat, oLan, idUser) {
 
-// =============================
-// INIT MAP — PER MODAL
-// =============================
-function initMapForObject(modalId, containerId, oLat, oLan, idUser) {
-    const container = document.getElementById(containerId);
-    if (!container) return console.error("Missing:", containerId);
+    console.log("Init map in container:", containerId);
 
-    // Ако има вече екземпляр → изчистваме го
-    destroyMapInstance(modalId);
+    const element = document.getElementById(containerId);
+    if (!element) {
+        console.error("Missing map container:", containerId);
+        return;
+    }
 
-    const objectPos = new google.maps.LatLng(parseFloat(oLat), parseFloat(oLan));
+    // stop using shared map / shared overlay
+    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
 
-    const map = new google.maps.Map(container, {
+    const mapInstance = new google.maps.Map(element, {
         center: objectPos,
         zoom: 14,
         mapId: "INTELLI_MAP_ID",
         mapTypeId: google.maps.MapTypeId.ROADMAP,
-        gestureHandling: "greedy",
+        gestureHandling: "greedy"
     });
 
-    const objectMarker = new google.maps.Marker({
-        map,
+    new google.maps.Marker({
         position: objectPos,
-        icon: "https://maps.google.com/mapfiles/kml/paddle/home.png"
+        map: mapInstance,
+        title: "Обект",
+        icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
     });
 
-    const trailPolyline = new google.maps.Polyline({
-        map,
-        path: [],
-        geodesic: true,
-        strokeColor: "#00b300",
-        strokeOpacity: 0.9,
-        strokeWeight: 4,
-    });
-
-    const heatmap = new google.maps.visualization.HeatmapLayer({
-        map,
-        data: [],
-        radius: 30,
-        opacity: 0.7,
-    });
-
-    const overlay = new CarOverlay(objectPos, map, {});
-
-
-    MAP_INSTANCES[modalId] = {
-        map,
-        objectMarker,
-        carOverlay: overlay,
-        polyline: trailPolyline,
-        heatmap,
-        lastPos: objectPos,
-        trail: [],
-        heatData: [],
-        idUser
-    };
-
-    // Зареждаме първоначална GPS позиция
-    updateCarPosition(modalId);
-    MAP_INSTANCES[modalId].interval = setInterval(() => updateCarPosition(modalId), 8000);
+    // Взимаме текущата GPS позиция ако е налична
+    if (window.__lastGps) {
+        new google.maps.Marker({
+            position: {
+                lat: parseFloat(window.__lastGps.lat),
+                lng: parseFloat(window.__lastGps.lng)
+            },
+            map: mapInstance,
+            title: "Автомобил",
+            icon: { url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+        });
+    }
 }
 
 
-// =============================
-// REMOVE MAP INSTANCE (when modal closes)
-// =============================
-function destroyMapInstance(modalId) {
-    const inst = MAP_INSTANCES[modalId];
-    if (!inst) return;
+// --- initMap ---
+function initMap(oLat,oLan,idUser){
+    const objectPos={lat:parseFloat(oLat),lng:parseFloat(oLan)};
+    if(!map){
+        map=new google.maps.Map(document.getElementById('mapContainer'),{
+            center:objectPos,
+            zoom:14,
+            mapId:"INTELLI_MAP_ID",
+            mapTypeId:google.maps.MapTypeId.ROADMAP,
+            gestureHandling:'greedy'
+        });
+    } else {
+        google.maps.event.trigger(map,'resize');
+        map.setCenter(objectPos);
+    }
 
-    if (inst.interval) clearInterval(inst.interval);
-    if (inst.carOverlay) inst.carOverlay.setMap(null);
-    if (inst.polyline) inst.polyline.setMap(null);
-    if (inst.heatmap) inst.heatmap.setMap(null);
+    if(!objectMarker){
+        objectMarker=new google.maps.Marker({
+            position:objectPos,
+            map:map,
+            title:"Обект",
+            icon:{url:"https://maps.google.com/mapfiles/kml/paddle/home.png"}
+        });
+    } else {
+        objectMarker.setPosition(objectPos);
+    }
 
-    delete MAP_INSTANCES[modalId];
+    if(!trailPolyline){
+        trailPolyline=new google.maps.Polyline({map:map,path:[],geodesic:true,strokeColor:"#00b300",strokeOpacity:0.9,strokeWeight:4});
+    }
+
+    if(!heatmap){
+        heatmap=new google.maps.visualization.HeatmapLayer({data:[],radius:30,dissipating:true,opacity:0.7,map:map});
+    }
+
+    if(!carOverlay || carOverlay.getMap()!==map){
+        carOverlay=new CarOverlay(new google.maps.LatLng(objectPos.lat,objectPos.lng),map,{});
+    } else {
+        carOverlay.update(new google.maps.LatLng(objectPos.lat,objectPos.lng),{});
+    }
+
+    carPosition=new google.maps.LatLng(objectPos.lat,objectPos.lng);
+
+    clearInterval(updateInterval);
+    updateInterval=setInterval(()=>updateCarPositionFallback(idUser),10000);
+    updateCarPositionFallback(idUser);
 }
 
+// --- Fallback AJAX position ---
+function updateCarPositionFallback(idUser){
+    $.ajax({
+        url:'system/get_geo_position.php',
+        method:'GET',
+        data:{idUser:idUser},
+        success:function(resp){
+            if(!resp) return;
+            try{
+                const [lat,lon]=resp.trim().split(',').map(parseFloat);
+                updateCarFromWebView(lat,lon,0,0,-1);
+            }catch(e){ console.warn('Fallback position error',e); }
+        },
+        error:function(){ console.error('Fallback position AJAX error'); }
+    });
+}
 
-// =============================
-// UPDATE CAR POSITION (WebView / fallback)
-// =============================
-function updateCarPosition(modalId) {
-    const inst = MAP_INSTANCES[modalId];
-    if (!inst) return;
+// --- Main entry for WebView updates ---
+window.updateCarFromWebView=function(lat,lng,speed,bearing,acc,altitude){
+    if(!map){ window.__lastGps={lat,lng,speed,bearing,acc,altitude,ts:Date.now()}; return; }
 
-    $.get("system/get_geo_position.php", { idUser: inst.idUser }, resp => {
-        if (!resp) return;
+    const newPos=new google.maps.LatLng(lat,lng);
 
-        try {
-            const [lat, lng] = resp.trim().split(",").map(parseFloat);
-            animateCar(modalId, lat, lng);
-        } catch (e) {
-            console.warn("Invalid GPS:", resp);
+    trailPoints.push(newPos); heatmapPoints.push(newPos);
+    if(trailPoints.length>trailMaxPoints) trailPoints.shift();
+    if(heatmapPoints.length>trailMaxPoints) heatmapPoints.shift();
+
+    trailPolyline.setPath(trailPoints);
+    heatmap.setData(heatmapPoints);
+
+    if(!carPosition){
+        carOverlay.update(newPos,{speed:speed,bearing:bearing,acc:acc,altitude:altitude});
+        carPosition=newPos;
+        fitMapToMarkers();
+        return;
+    }
+
+    const distanceMeters=haversineDistance(carPosition.lat(),carPosition.lng(),newPos.lat(),newPos.lng());
+    if(distanceMeters<1){
+        carOverlay.update(newPos,{speed:speed,bearing:bearing,acc:acc,altitude:altitude});
+        carPosition=newPos;
+        return;
+    }
+
+    const duration=Math.max(400,Math.min(3000,(distanceMeters/10)*200));
+    if(lastAnimation && lastAnimation.cancel) lastAnimation.cancel();
+
+    const start={lat:carPosition.lat(),lng:carPosition.lng()};
+    const end={lat:newPos.lat(),lng:newPos.lng()};
+    const startTime=performance.now();
+    let cancelled=false;
+    lastAnimation={cancel:()=>{cancelled=true;}};
+
+    function step(now){
+        if(cancelled) return;
+        const elapsed=now-startTime;
+        const t=Math.min(1,elapsed/duration);
+        const tt=t<0.5?2*t*t:-1+(4-2*t)*t;
+        const curLat=start.lat+(end.lat-start.lat)*tt;
+        const curLng=start.lng+(end.lng-start.lng)*tt;
+        const curPos=new google.maps.LatLng(curLat,curLng);
+        const curBearing=interpolateBearing(carOverlay.bearing||0,bearing,tt);
+        carOverlay.update(curPos,{speed:speed,bearing:curBearing,acc:acc,altitude:altitude});
+        if(t<1) requestAnimationFrame(step);
+        else {
+            carPosition=newPos;
+            carOverlay.update(newPos,{speed:speed,bearing:bearing,acc:acc,altitude:altitude});
+            fitMapToMarkers();
         }
-    });
+    }
+    requestAnimationFrame(step);
+};
+
+function fitMapToMarkers(){
+    if(!map || !objectMarker || !carOverlay) return;
+    const bounds=new google.maps.LatLngBounds();
+    bounds.extend(objectMarker.getPosition());
+    bounds.extend(carOverlay.position);
+    map.fitBounds(bounds);
 }
 
+// --- Вспомогателни функции ---
+function haversineDistance(lat1,lon1,lat2,lon2){
+    const R=6371000;
+    const toRad=(x)=>x*Math.PI/180;
+    const dLat=toRad(lat2-lat1);
+    const dLon=toRad(lon2-lon1);
+    const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    return R*c;
+}
 
-// =============================
-// ANIMATION + TRAIL
-// =============================
-function animateCar(modalId, lat, lng) {
-    const inst = MAP_INSTANCES[modalId];
-    if (!inst) return;
-
-    const newPos = new google.maps.LatLng(lat, lng);
-
-    inst.trail.push(newPos);
-    if (inst.trail.length > TRAIL_MAX_POINTS) inst.trail.shift();
-    inst.polyline.setPath(inst.trail);
-
-    inst.heatData.push(newPos);
-    inst.heatmap.setData(inst.heatData);
-
-    inst.carOverlay.update(newPos, {});
-    inst.lastPos = newPos;
+function interpolateBearing(b1,b2,t){
+    let diff=b2-b1;
+    if(diff>180) diff-=360;
+    if(diff<-180) diff+=360;
+    return b1+diff*t;
 }
