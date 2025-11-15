@@ -373,6 +373,63 @@ modalMapEl.addEventListener('shown.bs.modal', () => {
         window.__pendingMapInit = null;
     }
 });
+//
+//// --- Open Map Modal ---
+//function openMapModal(modalId, oLat, oLan, idUser) {
+//
+//    const modalEl = document.getElementById(modalId);
+//    const modal = new bootstrap.Modal(modalEl);
+//    modal.show();
+//
+//    const containerId = "mapContainer_" + modalId.replace("modalMap", "");
+//
+//    // Изчакваме Bootstrap да отвори модала (важно!)
+//    setTimeout(() => {
+//        initMapUnique(containerId, oLat, oLan, idUser);
+//    }, 350);
+//}
+//
+//function initMapUnique(containerId, oLat, oLan, idUser) {
+//
+//    console.log("Init map in container:", containerId);
+//
+//    const element = document.getElementById(containerId);
+//    if (!element) {
+//        console.error("Missing map container:", containerId);
+//        return;
+//    }
+//
+//    // stop using shared map / shared overlay
+//    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
+//
+//    const mapInstance = new google.maps.Map(element, {
+//        center: objectPos,
+//        zoom: 14,
+//        mapId: "INTELLI_MAP_ID",
+//        mapTypeId: google.maps.MapTypeId.ROADMAP,
+//        gestureHandling: "greedy"
+//    });
+//
+//    new google.maps.Marker({
+//        position: objectPos,
+//        map: mapInstance,
+//        title: "Обект",
+//        icon: { url: "https://maps.google.com/mapfiles/kml/paddle/home.png" }
+//    });
+//
+//    // Взимаме текущата GPS позиция ако е налична
+//    if (window.__lastGps) {
+//        new google.maps.Marker({
+//            position: {
+//                lat: parseFloat(window.__lastGps.lat),
+//                lng: parseFloat(window.__lastGps.lng)
+//            },
+//            map: mapInstance,
+//            title: "Автомобил",
+//            icon: { url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+//        });
+//    }
+//}
 
 // --- Open Map Modal ---
 function openMapModal(modalId, oLat, oLan, idUser) {
@@ -383,7 +440,7 @@ function openMapModal(modalId, oLat, oLan, idUser) {
 
     const containerId = "mapContainer_" + modalId.replace("modalMap", "");
 
-    // Изчакваме Bootstrap да отвори модала (важно!)
+    // Изчакваме Bootstrap да отвори модала
     setTimeout(() => {
         initMapUnique(containerId, oLat, oLan, idUser);
     }, 350);
@@ -399,7 +456,6 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
         return;
     }
 
-    // stop using shared map / shared overlay
     const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
 
     const mapInstance = new google.maps.Map(element, {
@@ -410,27 +466,37 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
         gestureHandling: "greedy"
     });
 
-    new google.maps.Marker({
+    // --- HTML икона за ОБЕКТ ---
+    const objectIcon = document.createElement("div");
+    objectIcon.innerHTML = `<i class="fa-solid fa-house-signal"
+                                style="font-size:32px;color:#007bff;"></i>`;
+
+    new google.maps.marker.AdvancedMarkerElement({
         position: objectPos,
         map: mapInstance,
         title: "Обект",
-        icon: { url: "https://maps.google.com/mapfiles/kml/paddle/home.png" }
+        content: objectIcon
     });
 
-    // Взимаме текущата GPS позиция ако е налична
+    // --- HTML икона за АВТОМОБИЛ ---
     if (window.__lastGps) {
-        new google.maps.Marker({
+
+        const carIcon = document.createElement("div");
+        carIcon.innerHTML = `<i class="fa-solid fa-car-on"
+                                 style="font-size:32px;color:#ff0000;"></i>`;
+
+        new google.maps.marker.AdvancedMarkerElement({
             position: {
                 lat: parseFloat(window.__lastGps.lat),
                 lng: parseFloat(window.__lastGps.lng)
             },
             map: mapInstance,
             title: "Автомобил",
-            icon: { url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+            content: carIcon
         });
     }
 }
-
+// END NEW
 
 // --- initMap ---
 function initMap(oLat,oLan,idUser){
