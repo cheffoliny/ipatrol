@@ -14,14 +14,19 @@ global $db_sod;
 $id_person = intval($_SESSION["user_id"]);
 
 // Получаване на данните
-//$lat      = isset($_POST['lat']) ? $_POST['lat'] : null;
-//$lng      = isset($_POST['lng']) ? $_POST['lng'] : null;
+$latRaw = $_POST['lat'] ?? null;
+$lngRaw = $_POST['lng'] ?? null;
+file_put_contents(__DIR__ . "/gps_debug.log", date('Y-m-d H:i:s') . " RAW_COORDS: latRaw=$latRaw lngRaw=$lngRaw" . PHP_EOL, FILE_APPEND);
 
-$lat = str_replace(',', '.', $_POST['lat']);
-$lng = str_replace(',', '.', $_POST['lng']);
+// Нормализиране (запетая -> точка)
+if ($latRaw !== null) $latRaw = str_replace(',', '.', trim($latRaw));
+if ($lngRaw !== null) $lngRaw = str_replace(',', '.', trim($lngRaw));
 
-//$lat = number_format((float)$lat, 8, '.', '');
-//$lng = number_format((float)$lng, 8, '.', '');
+$lat = is_numeric($latRaw) ? (float)$latRaw : null;
+$lng = is_numeric($lngRaw) ? (float)$lngRaw : null;
+
+file_put_contents(__DIR__ . "/gps_debug.log", date('Y-m-d H:i:s') . " NORMALIZED: lat=$lat lng=$lng" . PHP_EOL, FILE_APPEND);
+
 
 $accuracy = isset($_POST['accuracy']) ? floatval($_POST['accuracy']) : -1;
 $speed    = isset($_POST['speed']) ? floatval($_POST['speed']) : -1;
