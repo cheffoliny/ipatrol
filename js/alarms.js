@@ -261,6 +261,7 @@ function openMapModal(oLat,oLan,idUser){ const modal=new bootstrap.Modal(documen
 // --- Init map (patched) ---
 function initMap(oLat,oLan,idUser){
     if(carOverlay){ carOverlay.setMap(null); carOverlay=null; }
+    carPosition=null; trailPoints=[]; heatmapPoints=[];
 
     const objectPos={lat:parseFloat(oLat),lng:parseFloat(oLan)};
     if(!map){ map=new google.maps.Map(document.getElementById('mapContainer'),{center:objectPos,zoom:14,mapId:"INTELLI_MAP_ID",mapTypeId:google.maps.MapTypeId.ROADMAP,gestureHandling:'greedy'}); }
@@ -268,7 +269,7 @@ function initMap(oLat,oLan,idUser){
     if(!objectMarker){ objectMarker=new google.maps.Marker({position:objectPos,map:map,title:"Обект",icon:{url:"https://maps.google.com/mapfiles/ms/icons/blue-dot.png"}}); }
     else{ objectMarker.setPosition(objectPos); }
 
-    carPosition=null; trailPoints=[]; heatmapPoints=[];
+
     carOverlay=new CarOverlay(new google.maps.LatLng(objectPos.lat,objectPos.lng),map,{});
     if(!trailPolyline){ trailPolyline=new google.maps.Polyline({map:map,path:[],geodesic:true,strokeColor:"#00b300",strokeOpacity:0.9,strokeWeight:4}); }
     else{ trailPolyline.setPath([]); }
