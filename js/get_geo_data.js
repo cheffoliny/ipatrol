@@ -11,6 +11,7 @@
     }
 
     // Нов JSON callback (по-сигурен)
+    /*
     window.receiveGPSJSON = function(jsonStr) {
         try {
             // Debug: логваме суровия json string
@@ -79,6 +80,24 @@
         } catch (e) {
             console.error('receiveGPSJSON error:', e, jsonStr);
         }
+    };*/
+    window.receiveGPSJSON = function(jsonStr) {
+        let data = JSON.parse(jsonStr);
+
+        let lat = data.lat;
+        let lng = data.lng;
+
+        console.log("RAW_FROM_ANDROID:", data);
+        console.log("LAT", lat, "LNG", lng);
+
+        $.post("includes/log_gps.php", {
+            lat: lat,
+            lng: lng,
+            accuracy: data.accuracy,
+            speed: data.speed,
+            bearing: data.bearing,
+            altitude: data.altitude
+        });
     };
 
     // fallback: call every 5s
