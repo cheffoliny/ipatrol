@@ -89,7 +89,7 @@ function diffBadge($timeDiff)
 // 🧱 HTML изход
 // ===========================
 ?>
-<div class="row mb-2">
+<div class="row mb-2" style="height: 80px !important;">
     <div class="col p-2 m-1 text-white <?= ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between">
             <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
