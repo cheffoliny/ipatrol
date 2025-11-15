@@ -432,6 +432,48 @@ modalMapEl.addEventListener('shown.bs.modal', () => {
 //}
 
 // --- Open Map Modal ---
+// --- Custom HTML Marker class (FA Icon) ---
+class HtmlMarker extends google.maps.OverlayView {
+    constructor(position, html, map) {
+        super();
+        this.position = position;
+        this.html = html;
+        this.div = null;
+        this.setMap(map);
+    }
+
+    onAdd() {
+        this.div = document.createElement("div");
+        this.div.style.position = "absolute";
+        this.div.style.transform = "translate(-50%, -50%)";
+        this.div.innerHTML = this.html;
+
+        const panes = this.getPanes();
+        panes.overlayMouseTarget.appendChild(this.div);
+    }
+
+    draw() {
+        if (!this.div) return;
+        const proj = this.getProjection();
+        if (!proj) return;
+
+        const p = proj.fromLatLngToDivPixel(this.position);
+        if (!p) return;
+
+        this.div.style.left = p.x + "px";
+        this.div.style.top = p.y + "px";
+    }
+
+    onRemove() {
+        if (this.div && this.div.parentNode) {
+            this.div.parentNode.removeChild(this.div);
+        }
+        this.div = null;
+    }
+}
+
+
+// --- Open Map Modal ---
 function openMapModal(modalId, oLat, oLan, idUser) {
 
     const modalEl = document.getElementById(modalId);
@@ -440,62 +482,58 @@ function openMapModal(modalId, oLat, oLan, idUser) {
 
     const containerId = "mapContainer_" + modalId.replace("modalMap", "");
 
-    // Изчакваме Bootstrap да отвори модала
     setTimeout(() => {
         initMapUnique(containerId, oLat, oLan, idUser);
     }, 350);
 }
 
+
+// --- Init map with FA icons ---
 function initMapUnique(containerId, oLat, oLan, idUser) {
 
     console.log("Init map in container:", containerId);
 
-    const element = document.getElementById(containerId);
-    if (!element) {
-        console.error("Missing map container:", containerId);
+    const el = document.getElementById(containerId);
+    if (!el) {
+        console.error("Missing container:", containerId);
         return;
     }
 
-    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
+    const objectPos = {
+        lat: parseFloat(oLat),
+        lng: parseFloat(oLan)
+    };
 
-    const mapInstance = new google.maps.Map(element, {
+    // Init map
+    const mapInstance = new google.maps.Map(el, {
         center: objectPos,
         zoom: 14,
-        mapId: "INTELLI_MAP_ID",
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        gestureHandling: "greedy"
+        gestureHandling: "greedy",
+        mapId: "INTELLI_MAP_ID"
     });
 
-    // --- HTML икона за ОБЕКТ ---
-    const objectIcon = document.createElement("div");
-    objectIcon.innerHTML = `<i class="fa-solid fa-house-signal"
-                                style="font-size:32px;color:#007bff;"></i>`;
+    // --- Object marker (house icon)
+    new HtmlMarker(
+        new google.maps.LatLng(objectPos.lat, objectPos.lng),
+        `<i class="fa-solid fa-house-signal"
+            style="font-size:34px; color:#007bff;"></i>`,
+        mapInstance
+    );
 
-    new google.maps.marker.AdvancedMarkerElement({
-        position: objectPos,
-        map: mapInstance,
-        title: "Обект",
-        content: objectIcon
-    });
-
-    // --- HTML икона за АВТОМОБИЛ ---
+    // --- Car marker (if GPS available)
     if (window.__lastGps) {
-
-        const carIcon = document.createElement("div");
-        carIcon.innerHTML = `<i class="fa-solid fa-car-on"
-                                 style="font-size:32px;color:#ff0000;"></i>`;
-
-        new google.maps.marker.AdvancedMarkerElement({
-            position: {
-                lat: parseFloat(window.__lastGps.lat),
-                lng: parseFloat(window.__lastGps.lng)
-            },
-            map: mapInstance,
-            title: "Автомобил",
-            content: carIcon
-        });
+        new HtmlMarker(
+            new google.maps.LatLng(
+                parseFloat(window.__lastGps.lat),
+                parseFloat(window.__lastGps.lng)
+            ),
+            `<i class="fa-solid fa-car-on"
+                style="font-size:34px; color:#ff0000;"></i>`,
+            mapInstance
+        );
     }
 }
+
 // END NEW
 
 // --- initMap ---
