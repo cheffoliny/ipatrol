@@ -256,8 +256,24 @@ class CarOverlay extends google.maps.OverlayView {
 }
 
 // --- Open map modal ---
-function openMapModal(oLat,oLan,idUser){ const modal=new bootstrap.Modal(document.getElementById('modalMap')); modal.show(); setTimeout(()=>{ initMap(oLat,oLan,idUser); },400); }
+function openMapModal(oLat, oLan, idUser){
+    const modal = new bootstrap.Modal(document.getElementById('modalMap'));
+    modal.show();
 
+    setTimeout(() => {
+        const mapContainer = document.getElementById('mapContainer');
+        if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+            console.warn('Map container size is 0, forcing resize...');
+            mapContainer.style.width = '100%';
+            mapContainer.style.height = '500px';
+        }
+
+        // Принудително да накараме картата да се ресетне, ако вече е създадена
+        if (map) google.maps.event.trigger(map, 'resize');
+
+        initMap(oLat, oLan, idUser);
+    }, 400);
+}
 // --- Init map (patched) ---
 function initMap(oLat,oLan,idUser){
     if(carOverlay){ carOverlay.setMap(null); carOverlay=null; }
