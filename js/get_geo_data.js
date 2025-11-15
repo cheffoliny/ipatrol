@@ -34,8 +34,9 @@
     // Android callback — всички данни
     window.receiveGPS = function(lat, lng, acc, speed, bearing, altitude) {
         // normalize numbers
-        lat = parseFloat(lat);
-        lng = parseFloat(lng);
+        //lat = parseDouble(lat);
+        //lng = parseFloat(lng);
+        alert( lat + ' / ' + lng)
         acc = (acc !== undefined && acc !== null) ? parseFloat(acc) : -1;
         speed = (speed !== undefined && speed !== null) ? parseFloat(speed) : -1;
         bearing = (bearing !== undefined && bearing !== null) ? parseFloat(bearing) : 0;
