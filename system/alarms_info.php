@@ -89,8 +89,8 @@ function diffBadge($timeDiff)
 // 🧱 HTML изход
 // ===========================
 ?>
-<div class="row mb-2" style="height: 80px !important;">
-    <div class="col p-2 m-1 text-white <?= ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary'; ?>">
+<div style="height: 80px !important;" class="row mb-2" style="height: 80px !important;">
+    <div style="height: 80px !important;" class="col p-2 m-1 text-white <?= ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between">
             <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
         </div>
@@ -98,7 +98,7 @@ function diffBadge($timeDiff)
         <small>[<?= substr($gTime, 10, 10) ?>]</small>
     </div>
 
-    <div class="col p-2 m-1 text-white <?= ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
+    <div style="height: 80px !important;" class="col p-2 m-1 text-white <?= ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between">
             <h6>НА ОБЕКТА</h6><?= diffBadge($timeToObject) ?>
         </div>
@@ -106,7 +106,7 @@ function diffBadge($timeDiff)
         <small>[<?= substr($oTime, 10, 10) ?>]</small>
     </div>
 
-    <div class="col p-0 m-1 text-white <?= ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
+    <div style="height: 80px !important;" class="col p-0 m-1 text-white <?= ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between w-100 p-0">
             <div class="w-50 h-100 py-0">
                 <select id="reasonWithReaction" class="form-select form-select-sm border-primary shadow-sm bg-success py-5 m-0">
@@ -123,7 +123,7 @@ function diffBadge($timeDiff)
         </div>
     </div>
 
-    <div class="col p-2 m-1 text-white <?= ($rTime != '00.00.0000 00:00:00') ? 'bg-success' : 'bg-secondary'; ?>">
+    <div style="height: 80px !important;" class="col p-2 m-1 text-white <?= ($rTime != '00.00.0000 00:00:00') ? 'bg-success' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between">
             <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToEnd) ?>
         </div>
