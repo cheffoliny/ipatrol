@@ -108,6 +108,20 @@ $strMapModal = 'modalMap'.$oID;
         <small>[<?= substr($oTime, 10, 10) ?>]</small>
     </div>
 
+    <div class="mb-3">
+        <label class="form-label fw-bold">Сигнали – патрул</label>
+        <select class="form-select form-select-sm border-primary shadow-sm">
+            <?php get_alarm_reasons(); ?>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-bold">Сигнали – други</label>
+        <select class="form-select form-select-sm border-secondary shadow-sm">
+            <?php get_alarm_reasons2(); ?>
+        </select>
+    </div>
+
     <div class="col p-2 m-1 text-white <?= ($rTime != '00.00.0000 00:00:00') ? 'bg-success' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between">
             <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToEnd) ?>

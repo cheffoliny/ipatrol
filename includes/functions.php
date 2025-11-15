@@ -357,4 +357,33 @@ function getPersonNameByID( $pID ) {
     return $strName;
 
 }
+
+
+function render_alarm_reasons($isPatrul)
+{
+    global $db_sod;
+
+    $isPatrul = (int)$isPatrul;
+
+    $query = "
+        SELECT id, name
+        FROM alarm_reasons
+        WHERE to_arc = 0 AND is_patrul = {$isPatrul}
+        ORDER BY id ASC
+    ";
+
+    $result = mysqli_query($db_sod, $query);
+
+    if (!$result) {
+        echo "<option disabled class='text-danger'>ГРЕШКА! Опитайте по-късно.</option>";
+        return;
+    }
+
+    while ($row = mysqli_fetch_assoc($result)) {
+        $id   = htmlspecialchars($row['id']);
+        $name = htmlspecialchars($row['name']);
+
+        echo "<option value=\"{$id}\">{$name}</option>";
+    }
+}
 ?>
