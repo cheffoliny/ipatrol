@@ -414,7 +414,7 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
         position: objectPos,
         map: mapInstance,
         title: "Обект",
-        icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
+        icon: { url: "https://maps.google.com/mapfiles/kml/paddle/home.png" }
     });
 
     // Взимаме текущата GPS позиция ако е налична
