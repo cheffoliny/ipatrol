@@ -20,11 +20,15 @@ if ($aID === 0) {
     exit('<div class="alert alert-warning">Невалиден идентификатор на аларма.</div>');
 }
 
+// 🔄 Обновяване на статус при нужда
 if ($alarm_status !== '') {
     if ($alarm_reason === 0) $alarm_reason = $alarm_reason2;
     update_alarm_status($aID, $alarm_status, $idUser, $alarm_reason);
 }
 
+// ===========================
+// 🔍 Извличане на информация
+// ===========================
 $stmt = $db_sod->prepare("
     SELECT
         DATE_FORMAT(swkm.alarm_time, '%d.%m.%Y %H:%i:%s') AS aTime,
@@ -44,11 +48,8 @@ $stmt = $db_sod->prepare("
         swkm.id_archiv_alarm AS sID,
         o.id AS oID, o.id_receivers AS oRec,
         o.num AS oNum,
-        o.geo_lat AS oLat,
-        o.geo_lan AS oLan,
-        o.address AS oAddr,
-        o.place AS oPlace,
-        o.operativ_info AS oInfo
+        o.geo_lat AS oLat, o.geo_lan AS oLan,
+        o.address AS oAddr, o.place AS oPlace, o.operativ_info AS oInfo
     FROM work_card_movement swkm
     LEFT JOIN objects o ON o.id = swkm.id_object
     WHERE swkm.id = ?
@@ -64,10 +65,16 @@ if ($result->num_rows === 0) {
 $aRow = $result->fetch_assoc();
 extract($aRow, EXTR_OVERWRITE);
 
+// ===========================
+// 👤 Извличане на имена
+// ===========================
 $psName = $gUser ? getPersonNameByID($gUser) : '—';
 $poName = $oUser ? getPersonNameByID($oUser) : '—';
 $prName = $rUser ? getPersonNameByID($rUser) : '—';
 
+// ===========================
+// ⚙️ Помощни функции
+// ===========================
 function diffBadge($timeDiff)
 {
     if (!$timeDiff || $timeDiff == '0') return '';
@@ -77,8 +84,11 @@ function diffBadge($timeDiff)
     $color = (intval(substr($timeDiff, 2, 2)) > 5) ? 'bg-danger' : 'bg-success';
     return "<span class='badge float-end $color'>{$h}{$m}{$s}</span>";
 }
-?>
 
+// ===========================
+// 🧱 HTML изход
+// ===========================
+?>
 <div class="row mb-2">
     <div class="col p-2 m-1 text-white <?= ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between">
@@ -114,14 +124,13 @@ function diffBadge($timeDiff)
             </button>
 
             <!-- 🗺️ Бутон за карта -->
-
             <button class="btn btn-sm btn-success"
                     onclick="openMapModal(<?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
                 <i class="fa-solid fa-car"></i>
             </button>
 
             <button class="btn btn-sm btn-primary"
-                onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
+                    onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
                 <i class="fa-solid fa-book"></i>
             </button>
         </div>
@@ -141,13 +150,13 @@ function diffBadge($timeDiff)
             </small>
             <button class="btn btn-sm btn-outline-light py-0 px-2" onclick="manualRefreshArchive()">⟳</button>
         </div>
-
         <div id="archiveContent" class="text-center text-muted py-3">
             <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
         </div>
     </div>
 </div>
 
+<!-- Модал за обекта -->
 <div class="modal fade" id="modalObject" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content bg-dark text-white">
@@ -162,14 +171,8 @@ function diffBadge($timeDiff)
     </div>
 </div>
 
-<!-- 🗺️ МОДАЛ ЗА КАРТА (добавени data-атрибути за JS) -->
-<div class="modal fade" id="modalMap"
-    data-object-lat="<?= $oLat ?>"
-    data-object-lng="<?= $oLan ?>"
-    data-user-id="<?= $idUser ?>"
-    data-alarm-id="<?= $aID ?>"
-    tabindex="-1">
-
+<!-- 🗺️ Модал за карта -->
+<div class="modal fade" id="modalMap" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content bg-dark text-white">
             <div class="modal-header border-secondary">

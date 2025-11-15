@@ -408,10 +408,77 @@ function openMapModal(oLat, oLan, idUser) {
     }, 400);
 }
 
+//function initMap(oLat, oLan, idUser) {
+//    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
+//
+//    // Initialize map only once
+//    if (!map) {
+//        map = new google.maps.Map(document.getElementById('mapContainer'), {
+//            center: objectPos,
+//            zoom: 14,
+//            mapId: "INTELLI_MAP_ID",
+//            mapTypeId: google.maps.MapTypeId.ROADMAP,
+//            gestureHandling: 'greedy'
+//        });
+//    } else {
+//        map.setCenter(objectPos);
+//    }
+//
+//    // object marker
+//    if (!objectMarker) {
+//        objectMarker = new google.maps.Marker({
+//            position: objectPos,
+//            map: map,
+//            title: "Обект",
+//            icon: {
+//                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+//            }
+//        });
+//    } else {
+//        objectMarker.setPosition(objectPos);
+//    }
+//
+//    // init trail polyline
+//    if (!trailPolyline) {
+//        trailPolyline = new google.maps.Polyline({
+//            map: map,
+//            path: [],
+//            geodesic: true,
+//            strokeColor: "#00b300",
+//            strokeOpacity: 0.9,
+//            strokeWeight: 4
+//        });
+//    }
+//
+//    // init heatmap
+//    if (!heatmap) {
+//        heatmap = new google.maps.visualization.HeatmapLayer({
+//            data: [],
+//            radius: 30,
+//            dissipating: true,
+//            opacity: 0.7,
+//            map: map
+//        });
+//    }
+//
+//    // create carOverlay at object position initially
+//    if (!carOverlay) {
+//        carOverlay = new CarOverlay(new google.maps.LatLng(objectPos.lat, objectPos.lng), map, {});
+//    } else {
+//        carOverlay.update(new google.maps.LatLng(objectPos.lat, objectPos.lng), {});
+//    }
+//
+//    // call fallback AJAX updates every 10s (in case WebView not available)
+//    clearInterval(updateInterval);
+//    updateInterval = setInterval(() => updateCarPositionFallback(idUser), 10000);
+//    // initial fallback fetch immediately
+//    updateCarPositionFallback(idUser);
+//}
+
 function initMap(oLat, oLan, idUser) {
     const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
 
-    // Initialize map only once
+    // Ако имаме стара карта – само центрираме
     if (!map) {
         map = new google.maps.Map(document.getElementById('mapContainer'), {
             center: objectPos,
@@ -430,15 +497,22 @@ function initMap(oLat, oLan, idUser) {
             position: objectPos,
             map: map,
             title: "Обект",
-            icon: {
-                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-            }
+            icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
         });
     } else {
         objectMarker.setPosition(objectPos);
     }
 
-    // init trail polyline
+    // 🔴 Нулиране на стария carOverlay и trail, ако отваряме друг обект
+    if (carOverlay) {
+        carOverlay.setMap(null); // премахваме от старата карта
+        carOverlay = null;
+    }
+    carPosition = null;
+
+    trailPoints = [];
+    heatmapPoints = [];
+
     if (!trailPolyline) {
         trailPolyline = new google.maps.Polyline({
             map: map,
@@ -448,9 +522,11 @@ function initMap(oLat, oLan, idUser) {
             strokeOpacity: 0.9,
             strokeWeight: 4
         });
+    } else {
+        trailPolyline.setMap(map);
+        trailPolyline.setPath([]);
     }
 
-    // init heatmap
     if (!heatmap) {
         heatmap = new google.maps.visualization.HeatmapLayer({
             data: [],
@@ -459,20 +535,26 @@ function initMap(oLat, oLan, idUser) {
             opacity: 0.7,
             map: map
         });
-    }
-
-    // create carOverlay at object position initially
-    if (!carOverlay) {
-        carOverlay = new CarOverlay(new google.maps.LatLng(objectPos.lat, objectPos.lng), map, {});
     } else {
-        carOverlay.update(new google.maps.LatLng(objectPos.lat, objectPos.lng), {});
+        heatmap.setMap(map);
+        heatmap.setData([]);
     }
 
-    // call fallback AJAX updates every 10s (in case WebView not available)
+    // създаваме нов carOverlay
+    carOverlay = new CarOverlay(new google.maps.LatLng(objectPos.lat, objectPos.lng), map, {});
+
+    // fallback AJAX updates every 10s
     clearInterval(updateInterval);
     updateInterval = setInterval(() => updateCarPositionFallback(idUser), 10000);
+
     // initial fallback fetch immediately
     updateCarPositionFallback(idUser);
+
+    // ако вече има последни GPS координати (WebView)
+    if (window.__lastGps && typeof updateCarFromWebView === 'function') {
+        const gps = window.__lastGps;
+        updateCarFromWebView(gps.lat, gps.lng, gps.speed, gps.bearing, gps.acc, gps.altitude);
+    }
 }
 
 /* ----------------------------
