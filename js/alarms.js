@@ -356,23 +356,23 @@ class CarOverlay extends google.maps.OverlayView {
 }
 
 // --- Modal events patch ---
-const modalMapEl = document.getElementById('modalMap');
-modalMapEl.addEventListener('hidden.bs.modal', () => {
-    if(carOverlay){ carOverlay.setMap(null); carOverlay = null; }
-    if(trailPolyline){ trailPolyline.setMap(null); trailPolyline = null; }
-    if(heatmap){ heatmap.setMap(null); heatmap = null; }
-    carPosition = null;
-    trailPoints = [];
-    heatmapPoints = [];
-});
-
-modalMapEl.addEventListener('shown.bs.modal', () => {
-    if(window.__pendingMapInit){
-        const {oLat,oLan,idUser} = window.__pendingMapInit;
-        initMap(oLat,oLan,idUser);
-        window.__pendingMapInit = null;
-    }
-});
+//const modalMapEl = document.getElementById('modalMap');
+//modalMapEl.addEventListener('hidden.bs.modal', () => {
+//    if(carOverlay){ carOverlay.setMap(null); carOverlay = null; }
+//    if(trailPolyline){ trailPolyline.setMap(null); trailPolyline = null; }
+//    if(heatmap){ heatmap.setMap(null); heatmap = null; }
+//    carPosition = null;
+//    trailPoints = [];
+//    heatmapPoints = [];
+//});
+//
+//modalMapEl.addEventListener('shown.bs.modal', () => {
+//    if(window.__pendingMapInit){
+//        const {oLat,oLan,idUser} = window.__pendingMapInit;
+//        initMap(oLat,oLan,idUser);
+//        window.__pendingMapInit = null;
+//    }
+//});
 //
 //// --- Open Map Modal ---
 //function openMapModal(modalId, oLat, oLan, idUser) {
