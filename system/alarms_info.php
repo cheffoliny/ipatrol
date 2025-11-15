@@ -85,6 +85,8 @@ function diffBadge($timeDiff)
     return "<span class='badge float-end $color'>{$h}{$m}{$s}</span>";
 }
 
+$strMapModal = 'modalMap'.$oID;
+
 // ===========================
 // 🧱 HTML изход
 // ===========================
@@ -125,7 +127,7 @@ function diffBadge($timeDiff)
 
             <!-- 🗺️ Бутон за карта -->
             <button class="btn btn-sm btn-success"
-                    onclick="openMapModal(<?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
+                    onclick="openMapModal('<?= $strMapModal ?>', <?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
                 <i class="fa-solid fa-car"></i>
             </button>
 
@@ -172,7 +174,7 @@ function diffBadge($timeDiff)
 </div>
 
 <!-- 🗺️ Модал за карта -->
-<div class="modal fade" id="modalMap" tabindex="-1">
+<div class="modal fade" id="<?= $strMapModal ?>" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content bg-dark text-white">
             <div class="modal-header border-secondary">
@@ -180,7 +182,7 @@ function diffBadge($timeDiff)
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">
-                <div id="mapContainer" style="width:100%;height:500px;"></div>
+                <div id="mapContainer_<?= $oID ?>" style="width:100%;height:500px;"></div>
             </div>
         </div>
     </div>

@@ -375,11 +375,62 @@ modalMapEl.addEventListener('shown.bs.modal', () => {
 });
 
 // --- Open Map Modal ---
-function openMapModal(oLat,oLan,idUser){
-    const modal = new bootstrap.Modal(modalMapEl);
+function openMapModal(modalId, oLat, oLan, idUser) {
+
+    const modalEl = document.getElementById(modalId);
+    const modal = new bootstrap.Modal(modalEl);
     modal.show();
-    window.__pendingMapInit = { oLat, oLan, idUser };
+
+    const containerId = "mapContainer_" + modalId.replace("modalMap", "");
+
+    // Изчакваме Bootstrap да отвори модала (важно!)
+    setTimeout(() => {
+        initMapUnique(containerId, oLat, oLan, idUser);
+    }, 350);
 }
+
+function initMapUnique(containerId, oLat, oLan, idUser) {
+
+    console.log("Init map in container:", containerId);
+
+    const element = document.getElementById(containerId);
+    if (!element) {
+        console.error("Missing map container:", containerId);
+        return;
+    }
+
+    // stop using shared map / shared overlay
+    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
+
+    const mapInstance = new google.maps.Map(element, {
+        center: objectPos,
+        zoom: 14,
+        mapId: "INTELLI_MAP_ID",
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        gestureHandling: "greedy"
+    });
+
+    new google.maps.Marker({
+        position: objectPos,
+        map: mapInstance,
+        title: "Обект",
+        icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
+    });
+
+    // Взимаме текущата GPS позиция ако е налична
+    if (window.__lastGps) {
+        new google.maps.Marker({
+            position: {
+                lat: parseFloat(window.__lastGps.lat),
+                lng: parseFloat(window.__lastGps.lng)
+            },
+            map: mapInstance,
+            title: "Автомобил",
+            icon: { url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+        });
+    }
+}
+
 
 // --- initMap ---
 function initMap(oLat,oLan,idUser){
