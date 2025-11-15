@@ -255,44 +255,98 @@ class CarOverlay extends google.maps.OverlayView {
     onRemove() { if(this.div && this.div.parentNode){this.div.parentNode.removeChild(this.div); this.div=null;} }
 }
 
-// --- Open map modal ---
+// =========================
+// 🗺️ Open map modal + initMap patch
+// =========================
 function openMapModal(oLat, oLan, idUser){
     const modal = new bootstrap.Modal(document.getElementById('modalMap'));
     modal.show();
 
+    // изчакваме анимацията на модала
     setTimeout(() => {
         const mapContainer = document.getElementById('mapContainer');
-        if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
-            console.warn('Map container size is 0, forcing resize...');
-            mapContainer.style.width = '100%';
-            mapContainer.style.height = '500px';
-        }
+        if (!mapContainer) return;
 
-        // Принудително да накараме картата да се ресетне, ако вече е създадена
-        if (map) google.maps.event.trigger(map, 'resize');
+        // принудително ресетваме размера на картата
+        mapContainer.style.width = '100%';
+        mapContainer.style.height = '500px';
+
+        if (map) {
+            // trigger resize, за да се обнови картата ако вече е инициализирана
+            google.maps.event.trigger(map, 'resize');
+        }
 
         initMap(oLat, oLan, idUser);
     }, 400);
 }
-// --- Init map (patched) ---
-function initMap(oLat,oLan,idUser){
-    if(carOverlay){ carOverlay.setMap(null); carOverlay=null; }
-    carPosition=null; trailPoints=[]; heatmapPoints=[];
 
-    const objectPos={lat:parseFloat(oLat),lng:parseFloat(oLan)};
-    if(!map){ map=new google.maps.Map(document.getElementById('mapContainer'),{center:objectPos,zoom:14,mapId:"INTELLI_MAP_ID",mapTypeId:google.maps.MapTypeId.ROADMAP,gestureHandling:'greedy'}); }
-    else{ map.setCenter(objectPos); }
-    if(!objectMarker){ objectMarker=new google.maps.Marker({position:objectPos,map:map,title:"Обект",icon:{url:"https://maps.google.com/mapfiles/ms/icons/blue-dot.png"}}); }
-    else{ objectMarker.setPosition(objectPos); }
+function initMap(oLat, oLan, idUser){
+    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
 
+    // ресет на overlay-и и трайл/heatmap, за да няма наслагване при друг обект
+    if(carOverlay){ carOverlay.setMap(null); carOverlay = null; }
+    carPosition = null;
+    trailPoints = [];
+    heatmapPoints = [];
 
-    carOverlay=new CarOverlay(new google.maps.LatLng(objectPos.lat,objectPos.lng),map,{});
-    if(!trailPolyline){ trailPolyline=new google.maps.Polyline({map:map,path:[],geodesic:true,strokeColor:"#00b300",strokeOpacity:0.9,strokeWeight:4}); }
-    else{ trailPolyline.setPath([]); }
-    if(!heatmap){ heatmap=new google.maps.visualization.HeatmapLayer({data:[],radius:30,dissipating:true,opacity:0.7,map:map}); }
-    else{ heatmap.setData([]); }
+    // инициализация на картата
+    if(!map){
+        map = new google.maps.Map(document.getElementById('mapContainer'), {
+            center: objectPos,
+            zoom: 14,
+            mapId: "INTELLI_MAP_ID",
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            gestureHandling: 'greedy'
+        });
+    } else {
+        map.setCenter(objectPos);
+    }
+
+    // marker за обекта
+    if(!objectMarker){
+        objectMarker = new google.maps.Marker({
+            position: objectPos,
+            map: map,
+            title: "Обект",
+            icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
+        });
+    } else {
+        objectMarker.setPosition(objectPos);
+    }
+
+    // overlay за автомобила
+    carOverlay = new CarOverlay(new google.maps.LatLng(objectPos.lat, objectPos.lng), map, {});
+
+    // polyline за трайл
+    if(!trailPolyline){
+        trailPolyline = new google.maps.Polyline({
+            map: map,
+            path: [],
+            geodesic: true,
+            strokeColor: "#00b300",
+            strokeOpacity: 0.9,
+            strokeWeight: 4
+        });
+    } else {
+        trailPolyline.setPath([]);
+    }
+
+    // heatmap layer
+    if(!heatmap){
+        heatmap = new google.maps.visualization.HeatmapLayer({
+            data: [],
+            radius: 30,
+            dissipating: true,
+            opacity: 0.7,
+            map: map
+        });
+    } else {
+        heatmap.setData([]);
+    }
+
+    // fallback обновяване на позицията на автомобила
     clearInterval(updateInterval);
-    updateInterval=setInterval(()=>updateCarPositionFallback(idUser),10000);
+    updateInterval = setInterval(() => updateCarPositionFallback(idUser), 10000);
     updateCarPositionFallback(idUser);
 }
 
