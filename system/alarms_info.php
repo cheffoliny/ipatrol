@@ -14,7 +14,7 @@ $aID = intval($_GET['aID'] ?? 0);
 $alarm_status = $_GET['alarm_status'] ?? '';
 $alarm_reason = intval($_GET['alarm_reason'] ?? 0);
 $alarm_reason2 = intval($_GET['alarm_reason2'] ?? 0);
-$idUser = intval($_SESSION['uid'] ?? 0);
+$idUser = intval($_SESSION['user_id'] ?? 0);
 
 if ($aID === 0) {
     exit('<div class="alert alert-warning">Невалиден идентификатор на аларма.</div>');
@@ -85,7 +85,6 @@ function diffBadge($timeDiff)
     return "<span class='badge float-end $color'>{$h}{$m}{$s}</span>";
 }
 
-
 $strMapModal = 'modalMap'.$oID;
 
 // ===========================
@@ -134,7 +133,7 @@ $strMapModal = 'modalMap'.$oID;
         <small>[<?= substr($rTime, 10, 10) ?>]</small>
     </div>
 </div>
-<!-- Детайли за обекта -->
+
 <div class="card bg-dark text-white border-secondary">
     <div class="card-header d-flex justify-content-between align-items-center">
         <b><?= htmlspecialchars($oNum).' - '.htmlspecialchars($oName) ?></b>
@@ -143,9 +142,9 @@ $strMapModal = 'modalMap'.$oID;
                 <i class="fa-solid fa-house"></i>
             </button>
 
-            <!-- 🗺️ Нов бутон за карта -->
+            <!-- 🗺️ Бутон за карта -->
             <button class="btn btn-sm btn-success"
-                    onclick="openMapModal(<?= strMapModal ?>, <?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
+                    onclick="openMapModal('<?= $strMapModal ?>', <?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
                 <i class="fa-solid fa-car"></i>
             </button>
 
@@ -153,7 +152,6 @@ $strMapModal = 'modalMap'.$oID;
                     onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
                 <i class="fa-solid fa-book"></i>
             </button>
-
         </div>
     </div>
 
@@ -163,7 +161,6 @@ $strMapModal = 'modalMap'.$oID;
         <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
     </div>
 
-    <!-- 📚 Видима секция за архив -->
     <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-1">
             <small class="text-info">
@@ -172,15 +169,13 @@ $strMapModal = 'modalMap'.$oID;
             </small>
             <button class="btn btn-sm btn-outline-light py-0 px-2" onclick="manualRefreshArchive()">⟳</button>
         </div>
-
         <div id="archiveContent" class="text-center text-muted py-3">
             <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
         </div>
     </div>
-
 </div>
 
-<!-- Модалът за обекта остава -->
+<!-- Модал за обекта -->
 <div class="modal fade" id="modalObject" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content bg-dark text-white">
@@ -195,14 +190,14 @@ $strMapModal = 'modalMap'.$oID;
     </div>
 </div>
 
-<!-- 🗺️ Модал за Google карта -->
+<!-- 🗺️ Модал за карта -->
 <div class="modal fade" id="<?= $strMapModal ?>" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content bg-dark text-white">
-            <div class="modal-header border-secondary">
+         <!--   <div class="modal-header border-secondary">
                 <h6 class="modal-title"><i class="fa-solid fa-map-location-dot"></i> Локация на обект и екип</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+            </div>-->
             <div class="modal-body p-0">
                 <div id="mapContainer_<?= $oID ?>" style="width:100%;height:500px;"></div>
             </div>
