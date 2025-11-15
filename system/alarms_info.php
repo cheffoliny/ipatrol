@@ -108,13 +108,13 @@ function diffBadge($timeDiff)
 
     <div class="col p-0 m-1 text-white <?= ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
         <div class="d-flex justify-content-between w-100 p-0">
-            <div class="w-50">
-                <select class="form-select form-select-sm border-primary shadow-sm bg-success py-4 m-0">
+            <div class="w-50 h-100 py-0">
+                <select class="form-select form-select-sm border-primary shadow-sm bg-success py-5 m-0">
                 <?php render_alarm_reasons(1); ?>
                 </select>
             </div>
-            <div class="w-50">
-              <select class="form-select form-select-sm border-primary shadow-sm bg-danger py-4 m-0">
+            <div class="w-50 h-100 py-0">
+              <select class="form-select form-select-sm border-primary shadow-sm bg-danger py-5 m-0">
                 <?php render_alarm_reasons(0); ?>
                 </select>
             </div>
