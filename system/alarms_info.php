@@ -177,10 +177,10 @@ $strMapModal = 'modalMap'.$oID;
 <div class="modal fade" id="<?= $strMapModal ?>" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content bg-dark text-white">
-            <div class="modal-header border-secondary">
+         <!--   <div class="modal-header border-secondary">
                 <h6 class="modal-title"><i class="fa-solid fa-map-location-dot"></i> Локация на обект и екип</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+            </div>-->
             <div class="modal-body p-0">
                 <div id="mapContainer_<?= $oID ?>" style="width:100%;height:500px;"></div>
             </div>
