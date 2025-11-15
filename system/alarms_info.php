@@ -114,7 +114,7 @@ function diffBadge($timeDiff)
                     <?php render_alarm_reasons(1); ?>
                 </select>
             </div>
-            <div class="w-50 h-100 py-0">
+            <div class="w-50 py-0">
                 <select id="reasonNoReaction" class="form-select form-select-sm border-primary shadow-sm bg-danger text-white py-5 m-0">
                     <option value="0">БЕЗ РЕАКЦИЯ</option>";
                     <?php render_alarm_reasons(0); ?>
