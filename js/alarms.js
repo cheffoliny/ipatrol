@@ -258,38 +258,40 @@ class CarOverlay extends google.maps.OverlayView {
 // =========================
 // 🗺️ Open map modal + initMap patch
 // =========================
-function openMapModal(oLat, oLan, idUser){
-    const modal = new bootstrap.Modal(document.getElementById('modalMap'));
-    modal.show();
-
-    // изчакваме анимацията на модала
-    setTimeout(() => {
-        const mapContainer = document.getElementById('mapContainer');
-        if (!mapContainer) return;
-
-        // принудително ресетваме размера на картата
-        mapContainer.style.width = '100%';
-        mapContainer.style.height = '500px';
-
-        if (map) {
-            // trigger resize, за да се обнови картата ако вече е инициализирана
-            google.maps.event.trigger(map, 'resize');
-        }
-
-        initMap(oLat, oLan, idUser);
-    }, 400);
-}
-
-function initMap(oLat, oLan, idUser){
-    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
-
-    // ресет на overlay-и и трайл/heatmap, за да няма наслагване при друг обект
+// --- Bootstrap event: когато модалът се затваря, чистим всичко ---
+const modalMapEl = document.getElementById('modalMap');
+modalMapEl.addEventListener('hidden.bs.modal', () => {
     if(carOverlay){ carOverlay.setMap(null); carOverlay = null; }
+    if(trailPolyline){ trailPolyline.setMap(null); trailPolyline = null; }
+    if(heatmap){ heatmap.setMap(null); heatmap = null; }
     carPosition = null;
     trailPoints = [];
     heatmapPoints = [];
+});
 
-    // инициализация на картата
+// --- При показване на модала, инициализираме картата ---
+modalMapEl.addEventListener('shown.bs.modal', () => {
+    if(window.__pendingMapInit){
+        const {oLat,oLan,idUser} = window.__pendingMapInit;
+        initMap(oLat,oLan,idUser);
+        window.__pendingMapInit = null;
+    }
+});
+
+// --- Open Map Modal ---
+function openMapModal(oLat,oLan,idUser){
+    const modal = new bootstrap.Modal(document.getElementById('modalMap'));
+    modal.show();
+
+    // задаваме данните за initMap след като модалът се покаже
+    window.__pendingMapInit = { oLat, oLan, idUser };
+}
+
+// --- initMap ---
+function initMap(oLat,oLan,idUser){
+    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
+
+    // Инициализация на картата само веднъж
     if(!map){
         map = new google.maps.Map(document.getElementById('mapContainer'), {
             center: objectPos,
@@ -299,10 +301,11 @@ function initMap(oLat, oLan, idUser){
             gestureHandling: 'greedy'
         });
     } else {
+        google.maps.event.trigger(map, 'resize'); // Resize при повторно отваряне
         map.setCenter(objectPos);
     }
 
-    // marker за обекта
+    // Object marker
     if(!objectMarker){
         objectMarker = new google.maps.Marker({
             position: objectPos,
@@ -314,10 +317,7 @@ function initMap(oLat, oLan, idUser){
         objectMarker.setPosition(objectPos);
     }
 
-    // overlay за автомобила
-    carOverlay = new CarOverlay(new google.maps.LatLng(objectPos.lat, objectPos.lng), map, {});
-
-    // polyline за трайл
+    // Trail polyline
     if(!trailPolyline){
         trailPolyline = new google.maps.Polyline({
             map: map,
@@ -327,11 +327,9 @@ function initMap(oLat, oLan, idUser){
             strokeOpacity: 0.9,
             strokeWeight: 4
         });
-    } else {
-        trailPolyline.setPath([]);
     }
 
-    // heatmap layer
+    // Heatmap
     if(!heatmap){
         heatmap = new google.maps.visualization.HeatmapLayer({
             data: [],
@@ -340,11 +338,18 @@ function initMap(oLat, oLan, idUser){
             opacity: 0.7,
             map: map
         });
-    } else {
-        heatmap.setData([]);
     }
 
-    // fallback обновяване на позицията на автомобила
+    // Car overlay: ако няма или е прикачен към друга карта, създаваме нов
+    if(!carOverlay || carOverlay.getMap() !== map){
+        carOverlay = new CarOverlay(new google.maps.LatLng(objectPos.lat, objectPos.lng), map, {});
+    } else {
+        carOverlay.update(new google.maps.LatLng(objectPos.lat, objectPos.lng), {});
+    }
+
+    carPosition = new google.maps.LatLng(objectPos.lat, objectPos.lng);
+
+    // AJAX fallback за позицията на автомобила
     clearInterval(updateInterval);
     updateInterval = setInterval(() => updateCarPositionFallback(idUser), 10000);
     updateCarPositionFallback(idUser);
