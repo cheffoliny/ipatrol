@@ -270,65 +270,65 @@ if(!defined('INCLUDE_CHECK')) die('You are not allowed to execute this file dire
 /*
  * Get alarm Reasons
 */
-function get_alarm_reasons()
-{
-
-	global $db_sod;
-
-	$aQuery  = "SELECT id, name, is_patrul FROM alarm_reasons WHERE to_arc = 0 AND is_patrul = 1 ORDER BY is_patrul DESC,id ASC";
-	$aResult = mysqli_query( $db_sod, $aQuery ) or die( print "ВЪЗНИКНА ГРЕШКА! ОПИТАЙТЕ ПО–КЪСНО!" );
-	$n_aRows = mysqli_num_rows( $aResult );
-
-    $gSelect = '';
-
-	for ( $m = 0; $m < $n_aRows; $m++ ) {
-
-		$aRow	= mysqli_fetch_assoc( $aResult );
-		$rID	= $aRow['id'];
-		$rName	= $aRow['name'];
-		$rPatrul= $aRow['is_patrul'];
-
-		if ( $rPatrul == 1 ) {
-			$gSelect .= "<option value=". $rID ." > ".$rName ." </option>";
-		} else {
-			$gSelect .= "<option value=". $rID ." > ".$rName ." </option>";
-		}
-
-	}
-
-	echo $gSelect;
-
-}
-
-function get_alarm_reasons2()
-{
-
-	global $db_sod;
-
-	$aQuery  = "SELECT id, name, is_patrul FROM alarm_reasons WHERE to_arc = 0 AND is_patrul = 0 ORDER BY is_patrul DESC,id ASC";
-	$aResult = mysqli_query( $db_sod, $aQuery ) or die( print "ВЪЗНИКНА ГРЕШКА! ОПИТАЙТЕ ПО–КЪСНО!" );
-	$n_aRows = mysqli_num_rows( $aResult );
-
-	$gSelect = '';
-
-	for ( $m = 0; $m < $n_aRows; $m++ ) {
-
-		$aRow	= mysqli_fetch_assoc( $aResult );
-		$rID	= $aRow['id'];
-		$rName	= $aRow['name'];
-		$rPatrul= $aRow['is_patrul'];
-
-		if ( $rPatrul == 1 ) {
-			$gSelect .= "<option value=". $rID ." > ".$rName ." </option>";
-		} else {
-			$gSelect .= "<option value=". $rID ." > ".$rName ." </option>";
-		}
-
-	}
-
-	echo $gSelect;
-
-}
+// function get_alarm_reasons()
+// {
+//
+// 	global $db_sod;
+//
+// 	$aQuery  = "SELECT id, name, is_patrul FROM alarm_reasons WHERE to_arc = 0 AND is_patrul = 1 ORDER BY is_patrul DESC,id ASC";
+// 	$aResult = mysqli_query( $db_sod, $aQuery ) or die( print "ВЪЗНИКНА ГРЕШКА! ОПИТАЙТЕ ПО–КЪСНО!" );
+// 	$n_aRows = mysqli_num_rows( $aResult );
+//
+//     $gSelect = '';
+//
+// 	for ( $m = 0; $m < $n_aRows; $m++ ) {
+//
+// 		$aRow	= mysqli_fetch_assoc( $aResult );
+// 		$rID	= $aRow['id'];
+// 		$rName	= $aRow['name'];
+// 		$rPatrul= $aRow['is_patrul'];
+//
+// 		if ( $rPatrul == 1 ) {
+// 			$gSelect .= "<option value=". $rID ." > ".$rName ." </option>";
+// 		} else {
+// 			$gSelect .= "<option value=". $rID ." > ".$rName ." </option>";
+// 		}
+//
+// 	}
+//
+// 	echo $gSelect;
+//
+// }
+//
+// function get_alarm_reasons2()
+// {
+//
+// 	global $db_sod;
+//
+// 	$aQuery  = "SELECT id, name, is_patrul FROM alarm_reasons WHERE to_arc = 0 AND is_patrul = 0 ORDER BY is_patrul DESC,id ASC";
+// 	$aResult = mysqli_query( $db_sod, $aQuery ) or die( print "ВЪЗНИКНА ГРЕШКА! ОПИТАЙТЕ ПО–КЪСНО!" );
+// 	$n_aRows = mysqli_num_rows( $aResult );
+//
+// 	$gSelect = '';
+//
+// 	for ( $m = 0; $m < $n_aRows; $m++ ) {
+//
+// 		$aRow	= mysqli_fetch_assoc( $aResult );
+// 		$rID	= $aRow['id'];
+// 		$rName	= $aRow['name'];
+// 		$rPatrul= $aRow['is_patrul'];
+//
+// 		if ( $rPatrul == 1 ) {
+// 			$gSelect .= "<option value=". $rID ." > ".$rName ." </option>";
+// 		} else {
+// 			$gSelect .= "<option value=". $rID ." > ".$rName ." </option>";
+// 		}
+//
+// 	}
+//
+// 	echo $gSelect;
+//
+// }
 
 function update_alarm_status( $aID, $alarm_status, $idUser, $alarm_reason ) {
 
