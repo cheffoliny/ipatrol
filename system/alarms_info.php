@@ -106,16 +106,18 @@ function diffBadge($timeDiff)
         <small>[<?= substr($oTime, 10, 10) ?>]</small>
     </div>
 
-    <div class="col p-2 m-1 text-white <?= ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
-        <div class="d-flex justify-content-between">
-            <select class="form-select form-select-sm border-primary shadow-sm">
-                <?php render_alarm_reasons(0); ?>
-            </select>
-        </div>
-        <div class="d-flex justify-content-between">
-            <select class="form-select form-select-sm border-primary shadow-sm">
+    <div class="col p-0 m-1 text-white <?= ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
+        <div class="d-flex justify-content-between w-100 p-0">
+            <div class="w-50">
+                <select class="form-select form-select-sm border-primary shadow-sm bg-success py-4 m-0">
                 <?php render_alarm_reasons(1); ?>
-            </select>
+                </select>
+            </div>
+            <div class="w-50">
+              <select class="form-select form-select-sm border-primary shadow-sm bg-danger py-4 m-0">
+                <?php render_alarm_reasons(0); ?>
+                </select>
+            </div>
         </div>
     </div>
 
