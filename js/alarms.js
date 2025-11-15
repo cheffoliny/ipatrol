@@ -265,7 +265,7 @@ function manualRefreshArchive() {
 }
 
 // =========================
-// Google Map + Car Visualization
+// Google Map + Car Visualization (patched for HtmlMarker hoisting & safety)
 // =========================
 let map;
 let objectMarker;
@@ -581,20 +581,6 @@ modalMapEl.addEventListener('shown.bs.modal', () => {
 //    return b1+diff*t;
 //}
 
-// =========================
-// Google Map + Car Visualization (patched for HtmlMarker hoisting & safety)
-// =========================
-let map;
-let objectMarker;
-let carOverlay;
-let carPosition = null;
-let trailPolyline;
-let trailPoints = [];
-let trailMaxPoints = 500;
-let heatmap;
-let heatmapPoints = [];
-let updateInterval;
-let lastAnimation = null;
 
 /* ------------------------
    HtmlMarker (lightweight HTML marker using OverlayView)
