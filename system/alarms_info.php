@@ -145,7 +145,7 @@ $strMapModal = 'modalMap'.$oID;
 
             <!-- 🗺️ Нов бутон за карта -->
             <button class="btn btn-sm btn-success"
-                    onclick="openMapModal(<?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
+                    onclick="openMapModal(<?= strMapModal ?>, <?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
                 <i class="fa-solid fa-car"></i>
             </button>
 
