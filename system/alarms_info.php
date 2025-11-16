@@ -138,7 +138,7 @@ $strMapModal = 'modalMap'.$oID;
     </div>
 
     <div id="reason_time"
-         class="col p-2 m-1 text-white <?= ($rTime == '00.00.0000 00:00:00') ? 'bg-success' : 'bg-secondary'; ?> alarm-button"
+         class="col p-2 m-1 text-white <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary'; ?> alarm-button"
          data-aid="<?= $aID ?>"
          data-status="reason_time"
          style="cursor:pointer; height:96px">
