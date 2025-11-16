@@ -303,146 +303,246 @@ document.addEventListener('click', async function (ev) {
     loadAlarmInfo(aID);
 });
 
-
-// =========================
-// Google Map + Car Visualization (patched for HtmlMarker hoisting & safety)
-// =========================
-let map;
-let objectMarker;
-let carOverlay;
-let carPosition = null;
-let trailPolyline;
-let trailPoints = [];
-let trailMaxPoints = 500;
-let heatmap;
-let heatmapPoints = [];
-let updateInterval;
-let lastAnimation = null;
-
-// --- Car Overlay class (HTML marker)
-class CarOverlay extends google.maps.OverlayView {
-    constructor(position, map, options = {}) {
-        super();
-        this.position = position;
-        this.map = map;
-        this.div = null;
-        this.speed = options.speed || 0;
-        this.bearing = options.bearing || 0;
-        this.acc = options.acc || -1;
-        this.altitude = options.altitude || null;
-        this.setMap(map);
-    }
-    onAdd() {
-        this.div = document.createElement('div');
-        this.div.className = 'car-marker';
-
-        const shadow = document.createElement('div');
-        shadow.className = 'shadow';
-        shadow.style.background = 'radial-gradient(circle at 30% 30%, rgba(0,0,0,0.4), rgba(0,0,0,0))';
-        shadow.style.width = '48px';
-        shadow.style.height = '48px';
-        this.div.appendChild(shadow);
-
-        const speedBadge = document.createElement('div');
-        speedBadge.className = 'speed-badge';
-        speedBadge.innerText = this.speed > 0 ? Math.round(this.speed*3.6)+' km/h' : '';
-        this.div.appendChild(speedBadge);
-        this.speedBadgeEl = speedBadge;
-
-        const carSvg = document.createElement('div');
-        carSvg.className = 'car-shape';
-        carSvg.innerHTML = `
-            <svg viewBox="0 0 64 64" width="34" height="34" xmlns="http://www.w3.org/2000/svg">
-              <g>
-                <path d="M32 4 L44 24 L44 44 L20 44 L20 24 Z" fill="#2b8cff" stroke="#003a8c" stroke-width="1"/>
-                <circle cx="24" cy="48" r="3" fill="#222" />
-                <circle cx="40" cy="48" r="3" fill="#222" />
-              </g>
-            </svg>
-        `;
-        this.carSvgEl = carSvg;
-        this.div.appendChild(carSvg);
-
-        const panes = this.getPanes();
-        panes.overlayMouseTarget.appendChild(this.div);
-    }
-    draw() {
-        if(!this.div) return;
-        const projection = this.getProjection();
-        if(!projection) return;
-        const pos = projection.fromLatLngToDivPixel(this.position);
-        if(!pos) return;
-        this.div.style.left = (pos.x - 24) + 'px';
-        this.div.style.top = (pos.y - 24) + 'px';
-        this.div.style.transform = `rotate(${this.bearing}deg)`;
-        if(this.speedBadgeEl){
-            this.speedBadgeEl.innerText = this.speed>0 ? Math.round(this.speed*3.6)+' km/h':'';
-        }
-    }
-    update(position, opts={}) {
-        if(position) this.position = position;
-        if(opts.speed!==undefined) this.speed = opts.speed;
-        if(opts.bearing!==undefined) this.bearing = opts.bearing;
-        if(opts.acc!==undefined) this.acc = opts.acc;
-        if(opts.altitude!==undefined) this.altitude = opts.altitude;
-        if(this.div) this.draw();
-    }
-    onRemove() {
-        if(this.div && this.div.parentNode){
-            this.div.parentNode.removeChild(this.div);
-            this.div = null;
-        }
-    }
-}
-
-// --- Modal events patch ---
-//const modalMapEl = document.getElementById('modalMap');
-//modalMapEl.addEventListener('hidden.bs.modal', () => {
-//    if(carOverlay){ carOverlay.setMap(null); carOverlay = null; }
-//    if(trailPolyline){ trailPolyline.setMap(null); trailPolyline = null; }
-//    if(heatmap){ heatmap.setMap(null); heatmap = null; }
-//    carPosition = null;
-//    trailPoints = [];
-//    heatmapPoints = [];
-//});
 //
-//modalMapEl.addEventListener('shown.bs.modal', () => {
-//    if(window.__pendingMapInit){
-//        const {oLat,oLan,idUser} = window.__pendingMapInit;
-//        initMap(oLat,oLan,idUser);
-//        window.__pendingMapInit = null;
+//// =========================
+//// Google Map + Car Visualization (patched for HtmlMarker hoisting & safety)
+//// =========================
+//let map;
+//let objectMarker;
+//let carOverlay;
+//let carPosition = null;
+//let trailPolyline;
+//let trailPoints = [];
+//let trailMaxPoints = 500;
+//let heatmap;
+//let heatmapPoints = [];
+//let updateInterval;
+//let lastAnimation = null;
+//
+//// --- Car Overlay class (HTML marker)
+//class CarOverlay extends google.maps.OverlayView {
+//    constructor(position, map, options = {}) {
+//        super();
+//        this.position = position;
+//        this.map = map;
+//        this.div = null;
+//        this.speed = options.speed || 0;
+//        this.bearing = options.bearing || 0;
+//        this.acc = options.acc || -1;
+//        this.altitude = options.altitude || null;
+//        this.setMap(map);
 //    }
-//});
+//    onAdd() {
+//        this.div = document.createElement('div');
+//        this.div.className = 'car-marker';
 //
-//// --- Open Map Modal ---
+//        const shadow = document.createElement('div');
+//        shadow.className = 'shadow';
+//        shadow.style.background = 'radial-gradient(circle at 30% 30%, rgba(0,0,0,0.4), rgba(0,0,0,0))';
+//        shadow.style.width = '48px';
+//        shadow.style.height = '48px';
+//        this.div.appendChild(shadow);
+//
+//        const speedBadge = document.createElement('div');
+//        speedBadge.className = 'speed-badge';
+//        speedBadge.innerText = this.speed > 0 ? Math.round(this.speed*3.6)+' km/h' : '';
+//        this.div.appendChild(speedBadge);
+//        this.speedBadgeEl = speedBadge;
+//
+//        const carSvg = document.createElement('div');
+//        carSvg.className = 'car-shape';
+//        carSvg.innerHTML = `
+//            <svg viewBox="0 0 64 64" width="34" height="34" xmlns="http://www.w3.org/2000/svg">
+//              <g>
+//                <path d="M32 4 L44 24 L44 44 L20 44 L20 24 Z" fill="#2b8cff" stroke="#003a8c" stroke-width="1"/>
+//                <circle cx="24" cy="48" r="3" fill="#222" />
+//                <circle cx="40" cy="48" r="3" fill="#222" />
+//              </g>
+//            </svg>
+//        `;
+//        this.carSvgEl = carSvg;
+//        this.div.appendChild(carSvg);
+//
+//        const panes = this.getPanes();
+//        panes.overlayMouseTarget.appendChild(this.div);
+//    }
+//    draw() {
+//        if(!this.div) return;
+//        const projection = this.getProjection();
+//        if(!projection) return;
+//        const pos = projection.fromLatLngToDivPixel(this.position);
+//        if(!pos) return;
+//        this.div.style.left = (pos.x - 24) + 'px';
+//        this.div.style.top = (pos.y - 24) + 'px';
+//        this.div.style.transform = `rotate(${this.bearing}deg)`;
+//        if(this.speedBadgeEl){
+//            this.speedBadgeEl.innerText = this.speed>0 ? Math.round(this.speed*3.6)+' km/h':'';
+//        }
+//    }
+//    update(position, opts={}) {
+//        if(position) this.position = position;
+//        if(opts.speed!==undefined) this.speed = opts.speed;
+//        if(opts.bearing!==undefined) this.bearing = opts.bearing;
+//        if(opts.acc!==undefined) this.acc = opts.acc;
+//        if(opts.altitude!==undefined) this.altitude = opts.altitude;
+//        if(this.div) this.draw();
+//    }
+//    onRemove() {
+//        if(this.div && this.div.parentNode){
+//            this.div.parentNode.removeChild(this.div);
+//            this.div = null;
+//        }
+//    }
+//}
+//
+///* ------------------------
+//   HtmlMarker (lightweight HTML marker using OverlayView)
+//   must be defined BEFORE any function that uses it
+//   ------------------------ */
+//class HtmlMarker extends google.maps.OverlayView {
+//    constructor(position, html, mapInstance) {
+//        super();
+//        this.position = position instanceof google.maps.LatLng ? position : new google.maps.LatLng(position.lat, position.lng);
+//        this.html = html || '';
+//        this.div = null;
+//        this.mapInstance = mapInstance;
+//        this.setMap(mapInstance);
+//    }
+//
+//    onAdd() {
+//        this.div = document.createElement('div');
+//        this.div.className = 'html-marker';
+//        // center the icon exactly on the lat/lng
+//        this.div.style.position = 'absolute';
+//        this.div.style.transform = 'translate(-50%, -50%)';
+//        this.div.innerHTML = this.html;
+//
+//        const panes = this.getPanes();
+//        if (panes && panes.overlayMouseTarget) {
+//            panes.overlayMouseTarget.appendChild(this.div);
+//        } else if (panes && panes.overlayLayer) {
+//            panes.overlayLayer.appendChild(this.div);
+//        } else {
+//            // fallback append to map container
+//            const mapDiv = this.mapInstance.getDiv();
+//            mapDiv.appendChild(this.div);
+//        }
+//    }
+//
+//    draw() {
+//        if (!this.div) return;
+//        const proj = this.getProjection();
+//        if (!proj) return;
+//
+//        const p = proj.fromLatLngToDivPixel(this.position);
+//        if (!p) return;
+//
+//        this.div.style.left = p.x + 'px';
+//        this.div.style.top = p.y + 'px';
+//    }
+//
+//    onRemove() {
+//        if (this.div && this.div.parentNode) {
+//            this.div.parentNode.removeChild(this.div);
+//        }
+//        this.div = null;
+//    }
+//
+//    // helper to update position
+//    setPosition(position) {
+//        this.position = position instanceof google.maps.LatLng ? position : new google.maps.LatLng(position.lat, position.lng);
+//        if (this.div) this.draw();
+//    }
+//}
+//
+///* ------------------------
+//   Modal lifecycle protection
+//   (ensure modal element exists before attaching listeners)
+//   ------------------------ */
+//const modalMapEl = document.getElementById('modalMap');
+//if (modalMapEl) {
+//    modalMapEl.addEventListener('hidden.bs.modal', () => {
+//        // stop fallback updates
+//        clearInterval(updateInterval);
+//
+//        // clear any local per-modal overlays (we do not touch global map)
+//        if (carOverlay && typeof carOverlay.setMap === 'function') { try { carOverlay.setMap(null); } catch(e){} carOverlay = null; }
+//        if (trailPolyline && typeof trailPolyline.setMap === 'function') { try { trailPolyline.setMap(null); } catch(e){} trailPolyline = null; }
+//        if (heatmap && typeof heatmap.setMap === 'function') { try { heatmap.setMap(null); } catch(e){} heatmap = null; }
+//
+//        carPosition = null;
+//        trailPoints = [];
+//        heatmapPoints = [];
+//    });
+//}
+//
+///* ------------------------
+//   Open Map Modal
+//   modalId: id of modal element (e.g. "modalMap123")
+//   oLat/oLan: object coords
+//   idUser: id for fallback AJAX
+//   ------------------------ */
 //function openMapModal(modalId, oLat, oLan, idUser) {
+//    // safety: google.maps must be loaded
+//    if (typeof google === 'undefined' || !google.maps) {
+//        console.error('Google Maps API not loaded');
+//        // still show modal so user sees message
+//        const modalEl = document.getElementById(modalId);
+//        if (modalEl) {
+//            const m = new bootstrap.Modal(modalEl);
+//            m.show();
+//            const containerId = "mapContainer_" + modalId.replace("modalMap", "");
+//            const el = document.getElementById(containerId);
+//            if (el) el.innerHTML = '<div class="p-3 text-center text-warning">Картата не е заредена.</div>';
+//        }
+//        return;
+//    }
 //
 //    const modalEl = document.getElementById(modalId);
+//    if (!modalEl) {
+//        console.error('Missing modal element:', modalId);
+//        return;
+//    }
+//
 //    const modal = new bootstrap.Modal(modalEl);
 //    modal.show();
 //
 //    const containerId = "mapContainer_" + modalId.replace("modalMap", "");
 //
-//    // Изчакваме Bootstrap да отвори модала (важно!)
+//    // wait for BS to animate open & ensure container is visible
 //    setTimeout(() => {
 //        initMapUnique(containerId, oLat, oLan, idUser);
-//    }, 350);
+//    }, 300);
 //}
 //
+///* ------------------------
+//   initMapUnique: create a standalone map instance inside given container
+//   This avoids sharing global overlays between different modals/objects.
+//------------------------ */
 //function initMapUnique(containerId, oLat, oLan, idUser) {
-//
-//    console.log("Init map in container:", containerId);
-//
-//    const element = document.getElementById(containerId);
-//    if (!element) {
-//        console.error("Missing map container:", containerId);
+//    if (typeof google === 'undefined' || !google.maps) {
+//        console.error('Google Maps API not available in initMapUnique');
 //        return;
 //    }
 //
-//    // stop using shared map / shared overlay
-//    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
+//    const el = document.getElementById(containerId);
+//    if (!el) {
+//        console.error('Map container not found:', containerId);
+//        return;
+//    }
 //
-//    const mapInstance = new google.maps.Map(element, {
+//    // ensure container is empty
+//    el.innerHTML = '';
+//
+//    const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
+//    if (Number.isNaN(objectPos.lat) || Number.isNaN(objectPos.lng)) {
+//        el.innerHTML = '<div class="p-3 text-center text-danger">Невалидни координати.</div>';
+//        console.error('Invalid object coordinates', oLat, oLan);
+//        return;
+//    }
+//
+//    // create a map instance local to this container
+//    const localMap = new google.maps.Map(el, {
 //        center: objectPos,
 //        zoom: 14,
 //        mapId: "INTELLI_MAP_ID",
@@ -450,198 +550,105 @@ class CarOverlay extends google.maps.OverlayView {
 //        gestureHandling: "greedy"
 //    });
 //
-//    new google.maps.Marker({
-//        position: objectPos,
-//        map: mapInstance,
-//        title: "Обект",
-//        icon: { url: "https://maps.google.com/mapfiles/kml/paddle/home.png" }
-//    });
+//    // object marker (FontAwesome house icon)
+//    const houseHtml = `<i class="fa-solid fa-house-signal" style="font-size:32px; color:#0d6efd; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>`;
+//    const objectMarkerHtml = new HtmlMarker(new google.maps.LatLng(objectPos.lat, objectPos.lng), houseHtml, localMap);
 //
-//    // Взимаме текущата GPS позиция ако е налична
-//    if (window.__lastGps) {
-//        new google.maps.Marker({
-//            position: {
-//                lat: parseFloat(window.__lastGps.lat),
-//                lng: parseFloat(window.__lastGps.lng)
-//            },
-//            map: mapInstance,
-//            title: "Автомобил",
-//            icon: { url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
-//        });
-//    }
-//}
-
-// --- Open Map Modal ---
-// --- Custom HTML Marker class (FA Icon) ---
-
-// --- initMap ---
-//function initMap(oLat,oLan,idUser){
-//    const objectPos={lat:parseFloat(oLat),lng:parseFloat(oLan)};
-//    if(!map){
-//        map=new google.maps.Map(document.getElementById('mapContainer'),{
-//            center:objectPos,
-//            zoom:14,
-//            mapId:"INTELLI_MAP_ID",
-//            mapTypeId:google.maps.MapTypeId.ROADMAP,
-//            gestureHandling:'greedy'
-//        });
-//    } else {
-//        google.maps.event.trigger(map,'resize');
-//        map.setCenter(objectPos);
+//    // if we have cached last GPS from WebView, show car marker too
+//    let localCarMarker = null;
+//    if (window.__lastGps && window.__lastGps.lat && window.__lastGps.lng) {
+//        const carHtml = `<i class="fa-solid fa-car-on" style="font-size:30px; color:#dc3545; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>`;
+//        localCarMarker = new HtmlMarker(new google.maps.LatLng(parseFloat(window.__lastGps.lat), parseFloat(window.__lastGps.lng)), carHtml, localMap);
 //    }
 //
-//    if(!objectMarker){
-//        objectMarker=new google.maps.Marker({
-//            position:objectPos,
-//            map:map,
-//            title:"Обект",
-//            icon:{url:"https://maps.google.com/mapfiles/kml/paddle/home.png"}
-//        });
-//    } else {
-//        objectMarker.setPosition(objectPos);
-//    }
-//
-//    if(!trailPolyline){
-//        trailPolyline=new google.maps.Polyline({map:map,path:[],geodesic:true,strokeColor:"#00b300",strokeOpacity:0.9,strokeWeight:4});
-//    }
-//
-//    if(!heatmap){
-//        heatmap=new google.maps.visualization.HeatmapLayer({data:[],radius:30,dissipating:true,opacity:0.7,map:map});
-//    }
-//
-//    if(!carOverlay || carOverlay.getMap()!==map){
-//        carOverlay=new CarOverlay(new google.maps.LatLng(objectPos.lat,objectPos.lng),map,{});
-//    } else {
-//        carOverlay.update(new google.maps.LatLng(objectPos.lat,objectPos.lng),{});
-//    }
-//
-//    carPosition=new google.maps.LatLng(objectPos.lat,objectPos.lng);
-//
-//    clearInterval(updateInterval);
-//    updateInterval=setInterval(()=>updateCarPositionFallback(idUser),10000);
-//    updateCarPositionFallback(idUser);
-//}
-//
-//// --- Fallback AJAX position ---
-//function updateCarPositionFallback(idUser){
-//    $.ajax({
-//        url:'system/get_geo_position.php',
-//        method:'GET',
-//        data:{idUser:idUser},
-//        success:function(resp){
-//            if(!resp) return;
-//            try{
-//                const [lat,lon]=resp.trim().split(',').map(parseFloat);
-//                updateCarFromWebView(lat,lon,0,0,-1);
-//            }catch(e){ console.warn('Fallback position error',e); }
-//        },
-//        error:function(){ console.error('Fallback position AJAX error'); }
-//    });
-//}
-//
-//// --- Main entry for WebView updates ---
-//window.updateCarFromWebView=function(lat,lng,speed,bearing,acc,altitude){
-//    if(!map){ window.__lastGps={lat,lng,speed,bearing,acc,altitude,ts:Date.now()}; return; }
-//
-//    const newPos=new google.maps.LatLng(lat,lng);
-//
-//    trailPoints.push(newPos); heatmapPoints.push(newPos);
-//    if(trailPoints.length>trailMaxPoints) trailPoints.shift();
-//    if(heatmapPoints.length>trailMaxPoints) heatmapPoints.shift();
-//
-//    trailPolyline.setPath(trailPoints);
-//    heatmap.setData(heatmapPoints);
-//
-//    if(!carPosition){
-//        carOverlay.update(newPos,{speed:speed,bearing:bearing,acc:acc,altitude:altitude});
-//        carPosition=newPos;
-//        fitMapToMarkers();
-//        return;
-//    }
-//
-//    const distanceMeters=haversineDistance(carPosition.lat(),carPosition.lng(),newPos.lat(),newPos.lng());
-//    if(distanceMeters<1){
-//        carOverlay.update(newPos,{speed:speed,bearing:bearing,acc:acc,altitude:altitude});
-//        carPosition=newPos;
-//        return;
-//    }
-//
-//    const duration=Math.max(400,Math.min(3000,(distanceMeters/10)*200));
-//    if(lastAnimation && lastAnimation.cancel) lastAnimation.cancel();
-//
-//    const start={lat:carPosition.lat(),lng:carPosition.lng()};
-//    const end={lat:newPos.lat(),lng:newPos.lng()};
-//    const startTime=performance.now();
-//    let cancelled=false;
-//    lastAnimation={cancel:()=>{cancelled=true;}};
-//
-//    function step(now){
-//        if(cancelled) return;
-//        const elapsed=now-startTime;
-//        const t=Math.min(1,elapsed/duration);
-//        const tt=t<0.5?2*t*t:-1+(4-2*t)*t;
-//        const curLat=start.lat+(end.lat-start.lat)*tt;
-//        const curLng=start.lng+(end.lng-start.lng)*tt;
-//        const curPos=new google.maps.LatLng(curLat,curLng);
-//        const curBearing=interpolateBearing(carOverlay.bearing||0,bearing,tt);
-//        carOverlay.update(curPos,{speed:speed,bearing:curBearing,acc:acc,altitude:altitude});
-//        if(t<1) requestAnimationFrame(step);
-//        else {
-//            carPosition=newPos;
-//            carOverlay.update(newPos,{speed:speed,bearing:bearing,acc:acc,altitude:altitude});
-//            fitMapToMarkers();
+//    // expose a limited API to update car position for this local map instance
+//    // store on the container element to avoid global collisions
+//    el._updateCarPosition = function(lat, lng) {
+//        if (!localCarMarker) {
+//            const carHtml = `<i class="fa-solid fa-car-on" style="font-size:30px; color:#dc3545; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>`;
+//            localCarMarker = new HtmlMarker(new google.maps.LatLng(lat, lng), carHtml, localMap);
+//        } else {
+//            localCarMarker.setPosition(new google.maps.LatLng(lat, lng));
 //        }
+//
+//        // optionally fit bounds to show both
+//        try {
+//            const bounds = new google.maps.LatLngBounds();
+//            bounds.extend(objectMarkerHtml.position);
+//            bounds.extend(localCarMarker.position);
+//            localMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
+//        } catch (e) {
+//            // ignore fit errors
+//        }
+//    };
+//
+//    // start fallback updates for this instance (returns the interval id on element)
+//    if (el._fallbackInterval) {
+//        clearInterval(el._fallbackInterval);
 //    }
-//    requestAnimationFrame(step);
-//};
+//    el._fallbackInterval = setInterval(() => {
+//        // request latest position for idUser and update local marker
+//        $.ajax({
+//            url: 'system/get_geo_position.php',
+//            method: 'GET',
+//            data: { idUser: idUser },
+//            success: function(resp) {
+//                if (!resp) return;
+//                try {
+//                    const [lat, lon] = resp.trim().split(',').map(parseFloat);
+//                    if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+//                        el._updateCarPosition(lat, lon);
+//                    }
+//                } catch (err) {
+//                    console.warn('Fallback parse error', err);
+//                }
+//            },
+//            error: function() {
+//                // silent
+//            }
+//        });
+//    }, 10000);
 //
-//function fitMapToMarkers(){
-//    if(!map || !objectMarker || !carOverlay) return;
-//    const bounds=new google.maps.LatLngBounds();
-//    bounds.extend(objectMarker.getPosition());
-//    bounds.extend(carOverlay.position);
-//    map.fitBounds(bounds);
+//    // initial fallback fetch immediately
+//    $.ajax({
+//        url: 'system/get_geo_position.php',
+//        method: 'GET',
+//        data: { idUser: idUser },
+//        success: function(resp) {
+//            if (!resp) return;
+//            try {
+//                const [lat, lon] = resp.trim().split(',').map(parseFloat);
+//                if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+//                    el._updateCarPosition(lat, lon);
+//                }
+//            } catch (err) {
+//                console.warn('Initial fallback parse error', err);
+//            }
+//        }
+//    });
 //}
-//
-//// --- Вспомогателни функции ---
-//function haversineDistance(lat1,lon1,lat2,lon2){
-//    const R=6371000;
-//    const toRad=(x)=>x*Math.PI/180;
-//    const dLat=toRad(lat2-lat1);
-//    const dLon=toRad(lon2-lon1);
-//    const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-//    const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-//    return R*c;
-//}
-//
-//function interpolateBearing(b1,b2,t){
-//    let diff=b2-b1;
-//    if(diff>180) diff-=360;
-//    if(diff<-180) diff+=360;
-//    return b1+diff*t;
-//}
-
+// alarms.js
+// Google Maps: уникална карта/модал на обект + маршрут до колата + само преместваем маркер за колата
+// Автор: ревизирано за ipatrol
 
 /* ------------------------
-   HtmlMarker (lightweight HTML marker using OverlayView)
-   must be defined BEFORE any function that uses it
+   Универсален HtmlMarker (OverlayView) - лек HTML маркер
    ------------------------ */
 class HtmlMarker extends google.maps.OverlayView {
     constructor(position, html, mapInstance) {
         super();
-        this.position = position instanceof google.maps.LatLng ? position : new google.maps.LatLng(position.lat, position.lng);
+        this.position = (position instanceof google.maps.LatLng) ? position : new google.maps.LatLng(position.lat, position.lng);
         this.html = html || '';
         this.div = null;
         this.mapInstance = mapInstance;
         this.setMap(mapInstance);
     }
-
     onAdd() {
         this.div = document.createElement('div');
         this.div.className = 'html-marker';
-        // center the icon exactly on the lat/lng
         this.div.style.position = 'absolute';
         this.div.style.transform = 'translate(-50%, -50%)';
+        this.div.style.pointerEvents = 'auto';
         this.div.innerHTML = this.html;
 
         const panes = this.getPanes();
@@ -650,105 +657,105 @@ class HtmlMarker extends google.maps.OverlayView {
         } else if (panes && panes.overlayLayer) {
             panes.overlayLayer.appendChild(this.div);
         } else {
-            // fallback append to map container
-            const mapDiv = this.mapInstance.getDiv();
-            mapDiv.appendChild(this.div);
+            this.mapInstance.getDiv().appendChild(this.div);
         }
     }
-
     draw() {
         if (!this.div) return;
         const proj = this.getProjection();
         if (!proj) return;
-
         const p = proj.fromLatLngToDivPixel(this.position);
         if (!p) return;
-
         this.div.style.left = p.x + 'px';
         this.div.style.top = p.y + 'px';
     }
-
     onRemove() {
         if (this.div && this.div.parentNode) {
             this.div.parentNode.removeChild(this.div);
         }
         this.div = null;
     }
-
-    // helper to update position
     setPosition(position) {
-        this.position = position instanceof google.maps.LatLng ? position : new google.maps.LatLng(position.lat, position.lng);
+        this.position = (position instanceof google.maps.LatLng) ? position : new google.maps.LatLng(position.lat, position.lng);
         if (this.div) this.draw();
     }
 }
 
 /* ------------------------
-   Modal lifecycle protection
-   (ensure modal element exists before attaching listeners)
+   Utility: Haversine distance (meters)
    ------------------------ */
-const modalMapEl = document.getElementById('modalMap');
-if (modalMapEl) {
-    modalMapEl.addEventListener('hidden.bs.modal', () => {
-        // stop fallback updates
-        clearInterval(updateInterval);
-
-        // clear any local per-modal overlays (we do not touch global map)
-        if (carOverlay && typeof carOverlay.setMap === 'function') { try { carOverlay.setMap(null); } catch(e){} carOverlay = null; }
-        if (trailPolyline && typeof trailPolyline.setMap === 'function') { try { trailPolyline.setMap(null); } catch(e){} trailPolyline = null; }
-        if (heatmap && typeof heatmap.setMap === 'function') { try { heatmap.setMap(null); } catch(e){} heatmap = null; }
-
-        carPosition = null;
-        trailPoints = [];
-        heatmapPoints = [];
-    });
+function haversineDistanceMeters(a, b) {
+    const toRad = v => v * Math.PI / 180;
+    const lat1 = (typeof a.lat === 'function') ? a.lat() : a.lat;
+    const lon1 = (typeof a.lng === 'function') ? a.lng() : a.lng;
+    const lat2 = (typeof b.lat === 'function') ? b.lat() : b.lat;
+    const lon2 = (typeof b.lng === 'function') ? b.lng() : b.lng;
+    const R = 6371000;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const L = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(L), Math.sqrt(1-L));
+    return R * c;
 }
 
 /* ------------------------
-   Open Map Modal
-   modalId: id of modal element (e.g. "modalMap123")
-   oLat/oLan: object coords
-   idUser: id for fallback AJAX
+   cleanupMapContainer(containerId)
+   Почистване на всички ресурси за конкретен mapContainer_*
    ------------------------ */
-function openMapModal(modalId, oLat, oLan, idUser) {
-    // safety: google.maps must be loaded
-    if (typeof google === 'undefined' || !google.maps) {
-        console.error('Google Maps API not loaded');
-        // still show modal so user sees message
-        const modalEl = document.getElementById(modalId);
-        if (modalEl) {
-            const m = new bootstrap.Modal(modalEl);
-            m.show();
-            const containerId = "mapContainer_" + modalId.replace("modalMap", "");
-            const el = document.getElementById(containerId);
-            if (el) el.innerHTML = '<div class="p-3 text-center text-warning">Картата не е заредена.</div>';
-        }
-        return;
+function cleanupMapContainer(containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+
+    // stop fallback interval
+    if (el._fallbackInterval) {
+        clearInterval(el._fallbackInterval);
+        el._fallbackInterval = null;
     }
 
-    const modalEl = document.getElementById(modalId);
-    if (!modalEl) {
-        console.error('Missing modal element:', modalId);
-        return;
+    // stop directions renderer
+    if (el._directionsRenderer) {
+        try { el._directionsRenderer.setMap(null); } catch (e) {}
+        el._directionsRenderer = null;
     }
 
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
+    // remove markers
+    if (el._carMarker) {
+        try {
+            el._carMarker.onRemove && el._carMarker.onRemove();
+        } catch (e) {}
+        el._carMarker = null;
+    }
+    if (el._objectMarker) {
+        try {
+            el._objectMarker.onRemove && el._objectMarker.onRemove();
+        } catch (e) {}
+        el._objectMarker = null;
+    }
 
-    const containerId = "mapContainer_" + modalId.replace("modalMap", "");
+    // clear map ref
+    if (el._localMap) {
+        // Do NOT destroy global maps; we only drop references so GC can collect if needed
+        el._localMap = null;
+    }
 
-    // wait for BS to animate open & ensure container is visible
-    setTimeout(() => {
-        initMapUnique(containerId, oLat, oLan, idUser);
-    }, 300);
+    // other states
+    el._lastRouteOrigin = null;
+    el._lastRouteTs = 0;
+    el.classList.remove('ip-map-instance');
 }
 
 /* ------------------------
-   initMapUnique: create a standalone map instance inside given container
-   This avoids sharing global overlays between different modals/objects.
------------------------- */
+   initMapUnique(containerId, oLat, oLan, idUser)
+   Създава уникална карта в дадения контейнер.
+   containerId трябва да съвпада с елемент в DOM.
+   ------------------------ */
 function initMapUnique(containerId, oLat, oLan, idUser) {
     if (typeof google === 'undefined' || !google.maps) {
-        console.error('Google Maps API not available in initMapUnique');
+        console.error('Google Maps API not loaded');
+        const elFallback = document.getElementById(containerId);
+        if (elFallback) elFallback.innerHTML = '<div class="p-3 text-center text-warning">Картата не е заредена.</div>';
         return;
     }
 
@@ -758,7 +765,7 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
         return;
     }
 
-    // ensure container is empty
+    // ensure container clean
     el.innerHTML = '';
 
     const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
@@ -768,53 +775,110 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
         return;
     }
 
-    // create a map instance local to this container
+    // създаваме карта локално
     const localMap = new google.maps.Map(el, {
         center: objectPos,
         zoom: 14,
-        mapId: "INTELLI_MAP_ID",
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         gestureHandling: "greedy"
     });
 
-    // object marker (FontAwesome house icon)
+    // attach references
+    el._localMap = localMap;
+    el._objectPos = new google.maps.LatLng(objectPos.lat, objectPos.lng);
+
+    // Directions service & renderer
+    el._directionsService = new google.maps.DirectionsService();
+    el._directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        preserveViewport: false,
+        polylineOptions: { strokeWeight: 5, strokeOpacity: 0.85 }
+    });
+    el._directionsRenderer.setMap(localMap);
+
+    // Object (static) marker
     const houseHtml = `<i class="fa-solid fa-house-signal" style="font-size:32px; color:#0d6efd; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>`;
-    const objectMarkerHtml = new HtmlMarker(new google.maps.LatLng(objectPos.lat, objectPos.lng), houseHtml, localMap);
+    el._objectMarker = new HtmlMarker(el._objectPos, houseHtml, localMap);
 
-    // if we have cached last GPS from WebView, show car marker too
-    let localCarMarker = null;
-    if (window.__lastGps && window.__lastGps.lat && window.__lastGps.lng) {
-        const carHtml = `<i class="fa-solid fa-car-on" style="font-size:30px; color:#dc3545; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>`;
-        localCarMarker = new HtmlMarker(new google.maps.LatLng(parseFloat(window.__lastGps.lat), parseFloat(window.__lastGps.lng)), carHtml, localMap);
-    }
+    // car marker placeholder
+    el._carMarker = null;
+    el._lastCarLatLng = null;
 
-    // expose a limited API to update car position for this local map instance
-    // store on the container element to avoid global collisions
-    el._updateCarPosition = function(lat, lng) {
-        if (!localCarMarker) {
-            const carHtml = `<i class="fa-solid fa-car-on" style="font-size:30px; color:#dc3545; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>`;
-            localCarMarker = new HtmlMarker(new google.maps.LatLng(lat, lng), carHtml, localMap);
-        } else {
-            localCarMarker.setPosition(new google.maps.LatLng(lat, lng));
-        }
+    // route recalculation guards
+    el._lastRouteOrigin = null;
+    el._lastRouteTs = 0;
+    el._routeRecalcMinDistance = 30;   // метри
+    el._routeRecalcMinInterval = 30000; // ms
 
-        // optionally fit bounds to show both
+    // helper: fit bounds minimally
+    function fitToShowBoth() {
         try {
             const bounds = new google.maps.LatLngBounds();
-            bounds.extend(objectMarkerHtml.position);
-            bounds.extend(localCarMarker.position);
+            bounds.extend(el._objectMarker.position);
+            if (el._carMarker && el._carMarker.position) bounds.extend(el._carMarker.position);
             localMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
-        } catch (e) {
-            // ignore fit errors
+        } catch (e) { /* ignore */ }
+    }
+
+    // helper: recalc route if needed
+    el._recalcRouteFrom = function(lat, lng) {
+        const origin = new google.maps.LatLng(parseFloat(lat), parseFloat(lng));
+        const now = Date.now();
+        if (el._lastRouteOrigin) {
+            const dist = haversineDistanceMeters(origin, el._lastRouteOrigin);
+            if (dist < el._routeRecalcMinDistance && (now - el._lastRouteTs) < el._routeRecalcMinInterval) {
+                return; // no need
+            }
         }
+
+        el._directionsService.route({
+            origin: origin,
+            destination: el._objectPos,
+            travelMode: google.maps.TravelMode.DRIVING,
+            drivingOptions: { departureTime: new Date() }
+        }, function(result, status) {
+            if (status === google.maps.DirectionsStatus.OK || status === 'OK') {
+                el._directionsRenderer.setDirections(result);
+                el._lastRouteOrigin = origin;
+                el._lastRouteTs = Date.now();
+            } else {
+                console.warn('DirectionsService status:', status);
+            }
+        });
     };
 
-    // start fallback updates for this instance (returns the interval id on element)
+    // helper: update car position (create if needed)
+    el._updateCarPosition = function(lat, lng, opts = {}) {
+        if (typeof lat === 'undefined' || typeof lng === 'undefined') return;
+        const ll = new google.maps.LatLng(parseFloat(lat), parseFloat(lng));
+
+        if (!el._carMarker) {
+            const carHtml = `<div class="car-marker-badge" style="pointer-events:auto;">
+                                <i class="fa-solid fa-car-on" style="font-size:30px; color:#dc3545; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>
+                             </div>`;
+            el._carMarker = new HtmlMarker(ll, carHtml, localMap);
+            el._lastCarLatLng = ll;
+            fitToShowBoth();
+            try { el._recalcRouteFrom(lat, lng); } catch (e) {}
+            return;
+        }
+
+        // просто преместваме маркера
+        el._carMarker.setPosition(ll);
+        el._lastCarLatLng = ll;
+
+        // рекалкулация маршрута при нужда
+        try { el._recalcRouteFrom(lat, lng); } catch (e) {}
+
+        // (по избор) можете да добавите плавна интерполация тук
+    };
+
+    // стартова fallback AJAX заявка (за уеб браузър без WebView)
     if (el._fallbackInterval) {
         clearInterval(el._fallbackInterval);
+        el._fallbackInterval = null;
     }
     el._fallbackInterval = setInterval(() => {
-        // request latest position for idUser and update local marker
         $.ajax({
             url: 'system/get_geo_position.php',
             method: 'GET',
@@ -822,7 +886,9 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
             success: function(resp) {
                 if (!resp) return;
                 try {
-                    const [lat, lon] = resp.trim().split(',').map(parseFloat);
+                    const parts = resp.trim().split(',');
+                    const lat = parseFloat(parts[0]);
+                    const lon = parseFloat(parts[1]);
                     if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
                         el._updateCarPosition(lat, lon);
                     }
@@ -830,13 +896,11 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
                     console.warn('Fallback parse error', err);
                 }
             },
-            error: function() {
-                // silent
-            }
+            error: function() { /* silent */ }
         });
     }, 10000);
 
-    // initial fallback fetch immediately
+    // initial fallback fetch once
     $.ajax({
         url: 'system/get_geo_position.php',
         method: 'GET',
@@ -844,7 +908,9 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
         success: function(resp) {
             if (!resp) return;
             try {
-                const [lat, lon] = resp.trim().split(',').map(parseFloat);
+                const parts = resp.trim().split(',');
+                const lat = parseFloat(parts[0]);
+                const lon = parseFloat(parts[1]);
                 if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
                     el._updateCarPosition(lat, lon);
                 }
@@ -853,4 +919,104 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
             }
         }
     });
+
+    // ако имаме кеширани координати от WebView -> ъпдейтваме веднага
+    if (window.__lastGps && window.__lastGps.lat && window.__lastGps.lng) {
+        try {
+            el._updateCarPosition(window.__lastGps.lat, window.__lastGps.lng);
+        } catch (e) {}
+    }
+
+    // маркираме контейнера като инстанция
+    el.classList.add('ip-map-instance');
+
+    // връщаме обект (опционално)
+    return {
+        containerId: containerId,
+        map: localMap,
+        objectMarker: el._objectMarker,
+        carMarker: el._carMarker
+    };
 }
+
+/* ------------------------
+   openMapModal(modalId, oLat, oLan, idUser)
+   modalId: уникалното id на модала (запази го!)
+   oLat,oLan: координати на обекта
+   idUser: потребител/автомобил id (за fallback)
+   ------------------------ */
+function openMapModal(modalId, oLat, oLan, idUser) {
+    // safety: google maps може да липсва, но ще покажем модала все пак
+    const modalEl = document.getElementById(modalId);
+    if (!modalEl) {
+        console.error('openMapModal: modal element not found', modalId);
+        return;
+    }
+
+    // show bootstrap modal
+    const bsModal = new bootstrap.Modal(modalEl);
+    bsModal.show();
+
+    // derive containerId - в HTML структурата използвате id="mapContainer_<suffix>"
+    const suffix = modalId.replace(/^modalMap/i, '');
+    const containerId = 'mapContainer_' + suffix;
+
+    // wait a bit for modal animation so container has size
+    setTimeout(() => {
+        initMapUnique(containerId, oLat, oLan, idUser);
+    }, 300);
+
+    // attach hidden.bs.modal listener once per modal (cleanup on close)
+    // използваме named handler за лесно премахване при повторно отваряне
+    const handlerName = '__cleanup_handler_' + modalId;
+    // ако вече е имало такъв - премахваме стария
+    if (modalEl[handlerName]) {
+        modalEl.removeEventListener('hidden.bs.modal', modalEl[handlerName]);
+        modalEl[handlerName] = null;
+    }
+
+    modalEl[handlerName] = function() {
+        // извикваме cleanup за този контейнер
+        cleanupMapContainer(containerId);
+
+        // допълнителни глобални състояния (ако имате такива), нулиране:
+        try {
+            if (typeof updateInterval !== 'undefined') { clearInterval(updateInterval); updateInterval = null; }
+        } catch (e) {}
+
+        // премахваме самия слушател (за да не трупаме)
+        try { modalEl.removeEventListener('hidden.bs.modal', modalEl[handlerName]); } catch (e) {}
+        modalEl[handlerName] = null;
+    };
+
+    modalEl.addEventListener('hidden.bs.modal', modalEl[handlerName]);
+}
+
+/* ------------------------
+   Глобална функция за подаване на GPS от WebView
+   Търси всички контейнер-e mapContainer_* и им подава координати
+   ------------------------ */
+window.updateCarFromWebView = function(lat, lng, speed, bearing, accuracy, altitude) {
+    try {
+        // намери всички mapContainer_* елементи (инстанции)
+        const maps = document.querySelectorAll('[id^="mapContainer_"]');
+        maps.forEach(function(mapEl) {
+            if (!mapEl) return;
+            if (typeof mapEl._updateCarPosition === 'function') {
+                try {
+                    mapEl._updateCarPosition(lat, lng, { speed, bearing, accuracy, altitude });
+                } catch (e) {
+                    console.warn('mapEl._updateCarPosition error', e);
+                }
+            } else {
+                // ако няма _updateCarPosition може да е, защото initMapUnique не е изпълнен още
+                // в такъв случай съхраним __lastGps (вече прави get_geo_data.js) и initMapUnique ще го приложи
+            }
+        });
+
+        // обновяваме глобалния кеш
+        window.__lastGps = { lat, lng, speed, bearing, accuracy, altitude, ts: Date.now() };
+    } catch (e) {
+        console.error('updateCarFromWebView error', e);
+    }
+};
