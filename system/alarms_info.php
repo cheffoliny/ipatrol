@@ -85,6 +85,14 @@ function diffBadge($timeDiff)
     return "<span class='badge float-end $color'>{$h}{$m}{$s}</span>";
 }
 
+$strClassStart = ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary';
+$strBtnStart = ($gTime == '00.00.0000 00:00:00') ? 'id="start_time" data-status="start_time" data-aid="'.$aID.'"' : 'disabled="disabled"';
+$strClassEnd = ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary';
+$strBtnEnd = ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'id="end_time" data-status="end_time" data-aid="'.$aID.'"' : 'disabled="disabled"';
+$strClassReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary';
+$strBtnReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'id="reason_time" data-status="reason_time" data-aid="'.$aID.'"' : 'disabled="disabled"';
+$strSelectReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? '' : 'disabled="disabled"';
+
 $strMapModal = 'modalMap'.$oID;
 
 // ===========================
@@ -92,30 +100,18 @@ $strMapModal = 'modalMap'.$oID;
 // ===========================
 ?>
 <div id="alarm-info-container" class="row px-0 mx-0 mb-2">
-    <div id="start_time"
-         class="col p-2 m-1 text-white <?= ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary'; ?> alarm-button"
-         data-aid="<?= $aID ?>"
-         data-status="start_time"
-         style="cursor:pointer; height:96px">
-
+    <div class="col p-2 m-1 text-white alarm-button <?= $strClassStart ?>" style="cursor:pointer; height:96px" <?= $strBtnStart?> >
         <div class="d-flex justify-content-between">
             <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
         </div>
-
         <small><?= htmlspecialchars($psName) ?></small><br>
         <small>[<?= substr($gTime, 10, 10) ?>]</small>
     </div>
 
-    <div id="end_time"
-         class="col p-2 my-1 mx-0 text-white <?= ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary'; ?> alarm-button"
-         data-aid="<?= $aID ?>"
-         data-status="end_time"
-         style="cursor:pointer; height:96px">
-
+    <div class="col p-2 my-1 mx-0 text-white alarm-button <?= $strClassEnd ?>" style="cursor:pointer; height:96px" <?= $strBtnEnd; ?> >
         <div class="d-flex justify-content-between">
             <h6>НА ОБЕКТА</h6><?= diffBadge($timeToObject) ?>
         </div>
-
         <small><?= htmlspecialchars($poName) ?></small><br>
         <small>[<?= substr($oTime, 10, 10) ?>]</small>
     </div>
@@ -123,30 +119,24 @@ $strMapModal = 'modalMap'.$oID;
     <div style="height: 96px !important;" class="col p-0 m-1">
         <div class="d-flex justify-content-between w-100 p-0">
             <div class="w-50 h-100 py-0 mr-2">
-                <select id="reasonWithReaction" onchange="reset_select_reasons()" class="form-select form-select-sm border-primary shadow-sm text-white pt-4 py-5 m-0 border border-success <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary'; ?>">
+                <select id="reasonWithReaction" onchange="reset_select_reasons()" <?= $strSelectReason ?> class="form-select form-select-sm border-primary shadow-sm text-white pt-4 py-5 m-0 border border-success <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary'; ?>">
                     <option value="0">С РЕАКЦИЯ</option>";
                     <?php render_alarm_reasons(1); ?>
                 </select>
             </div>
             <div class="w-50 py-0">
-                <select id="reasonNoReaction" onchange="reset_select_reasons()" class="form-select form-select-sm border-primary shadow-sm text-white pt-4 pb-5 m-0 border border-danger <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-danger text-dark' : 'bg-secondary'; ?>">
+                <select id="reasonNoReaction" onchange="reset_select_reasons()" <?= $strSelectReason ?> class="form-select form-select-sm border-primary shadow-sm text-white pt-4 pb-5 m-0 border border-danger <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-danger text-dark' : 'bg-secondary'; ?>">
                     <option value="0">БЕЗ РЕАКЦИЯ</option>";
                     <?php render_alarm_reasons(0); ?>
                 </select>
             </div>
         </div>
     </div>
-
-    <div id="reason_time"
-         class="col p-2 m-1 text-white <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary'; ?> alarm-button"
-         data-aid="<?= $aID ?>"
-         data-status="reason_time"
-         style="cursor:pointer; height:96px">
-
+    <!-- БУТОН ПРИКЛЮЧИ -->
+    <div class="col p-2 m-1 text-white alarm-button <?= $strClassReason ?>" style="cursor:pointer; height:96px" <?= $strBtnReason ?> >
         <div class="d-flex justify-content-between">
             <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToEnd) ?>
         </div>
-
         <small><?= htmlspecialchars($prName) ?></small><br>
         <small>[<?= substr($rTime, 10, 10) ?>]</small>
     </div>
@@ -156,7 +146,7 @@ $strMapModal = 'modalMap'.$oID;
             <b><?= htmlspecialchars($oName) ?></b>
             <div>
                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject">
-                    <i class="fa-solid fa-house"></i>
+                    <i class="fa-solid fa-phone"></i>
                 </button>
 
                 <!-- 🗺️ Бутон за карта -->
@@ -178,7 +168,7 @@ $strMapModal = 'modalMap'.$oID;
             <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
         </div>
 
-        <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:none;">
+        <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <small class="text-info">
                     <i class="fa-solid fa-circle fa-xs me-1 text-success" id="archiveStatusIcon"></i>
