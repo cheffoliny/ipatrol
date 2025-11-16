@@ -91,7 +91,7 @@ $strMapModal = 'modalMap'.$oID;
 // 🧱 HTML изход
 // ===========================
 ?>
-<div id="alarm-info-container" class="row px-0 mb-2">
+<div id="alarm-info-container" class="row px-0 mx-0 mb-2">
     <div id="start_time"
          class="col p-2 m-1 text-white <?= ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary'; ?> alarm-button"
          data-aid="<?= $aID ?>"
@@ -150,48 +150,50 @@ $strMapModal = 'modalMap'.$oID;
         <small><?= htmlspecialchars($prName) ?></small><br>
         <small>[<?= substr($rTime, 10, 10) ?>]</small>
     </div>
+
+    <div class="card bg-dark text-white border-secondary">
+        <div class="card-header d-flex justify-content-between align-items-center py-0">
+            <b><?= htmlspecialchars($oName) ?></b>
+            <div>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject">
+                    <i class="fa-solid fa-house"></i>
+                </button>
+
+                <!-- 🗺️ Бутон за карта -->
+                <button class="btn btn-sm btn-success"
+                        onclick="openMapModal('<?= $strMapModal ?>', <?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
+                    <i class="fa-solid fa-car"></i>
+                </button>
+
+                <button class="btn btn-sm btn-primary"
+                        onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
+                    <i class="fa-solid fa-book"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body p-2">
+            <p><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($oAddr) ?></p>
+            <p><?= htmlspecialchars($oPlace) ?></p>
+            <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
+        </div>
+
+        <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <small class="text-info">
+                    <i class="fa-solid fa-circle fa-xs me-1 text-success" id="archiveStatusIcon"></i>
+                    <span id="archiveStatusText">Зареждане...</span>
+                </small>
+                <button class="btn btn-sm btn-outline-light py-0 px-2" onclick="manualRefreshArchive()"><i class="far fa-reload"></i></button>
+            </div>
+            <div id="archiveContent" class="text-center text-muted py-3">
+                <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="card bg-dark text-white border-secondary">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <b><?= htmlspecialchars($oNum).' - '.htmlspecialchars($oName) ?></b>
-        <div>
-            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject">
-                <i class="fa-solid fa-house"></i>
-            </button>
 
-            <!-- 🗺️ Бутон за карта -->
-            <button class="btn btn-sm btn-success"
-                    onclick="openMapModal('<?= $strMapModal ?>', <?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
-                <i class="fa-solid fa-car"></i>
-            </button>
-
-            <button class="btn btn-sm btn-primary"
-                    onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
-                <i class="fa-solid fa-book"></i>
-            </button>
-        </div>
-    </div>
-
-    <div class="card-body p-2">
-        <p><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($oAddr) ?></p>
-        <p><?= htmlspecialchars($oPlace) ?></p>
-        <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
-    </div>
-
-    <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-            <small class="text-info">
-                <i class="fa-solid fa-circle fa-xs me-1 text-success" id="archiveStatusIcon"></i>
-                <span id="archiveStatusText">Зареждане...</span>
-            </small>
-            <button class="btn btn-sm btn-outline-light py-0 px-2" onclick="manualRefreshArchive()">⟳</button>
-        </div>
-        <div id="archiveContent" class="text-center text-muted py-3">
-            <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
-        </div>
-    </div>
-</div>
 
 <!-- Модал за обекта -->
 <div class="modal fade" id="modalObject" tabindex="-1">
