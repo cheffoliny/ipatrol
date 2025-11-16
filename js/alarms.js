@@ -797,7 +797,7 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
     el._directionsRenderer.setMap(localMap);
 
     // Object (static) marker
-    const houseHtml = `<i class="fa-solid fa-house-signal" style="font-size:32px; color:#0d6efd; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>`;
+    const houseHtml = `<i class="fa-solid fa-house-signal" style="font-size:32px; color:#dc3545; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>`;
     el._objectMarker = new HtmlMarker(el._objectPos, houseHtml, localMap);
 
     // car marker placeholder
@@ -854,7 +854,7 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
 
         if (!el._carMarker) {
             const carHtml = `<div class="car-marker-badge" style="pointer-events:auto;">
-                                <i class="fa-solid fa-car-on" style="font-size:30px; color:#dc3545; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>
+                                <i class="fa-solid fa-car-on" style="font-size:30px; color:#0d6efd; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>
                              </div>`;
             el._carMarker = new HtmlMarker(ll, carHtml, localMap);
             el._lastCarLatLng = ll;
