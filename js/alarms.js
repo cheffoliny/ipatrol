@@ -792,7 +792,7 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
     el._directionsRenderer = new google.maps.DirectionsRenderer({
         suppressMarkers: true,
         preserveViewport: false,
-        polylineOptions: { strokeWeight: 5, strokeOpacity: 0.85 }
+        polylineOptions: { strokeWeight: 5, strokeOpacity: 0.85, strokeColor: '#00bcd4' }
     });
     el._directionsRenderer.setMap(localMap);
 
