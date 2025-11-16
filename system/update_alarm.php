@@ -18,9 +18,9 @@ $aID = intval($_POST['aID']);
 $user = intval($_SESSION['user_id']);
 
 $query = "
-    UPDATE work_card_movement
-    SET start_time = NOW(), updated_time = NOW()
-    WHERE id = $aID AND start_time = '0000-00-00 00:00:00'
+    UPDATE work_card_movement_test
+    SET stop_play = 1, updated_time = NOW()
+    WHERE id = $aID AND stop_play = 0
 ";
 
 if (mysqli_query($db_sod, $query)) {

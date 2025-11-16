@@ -24,7 +24,7 @@ $aQuery = "
         DATE_FORMAT(swkm.end_time, '%d.%m.%Y %H:%i:%s') AS oTime,
         DATE_FORMAT(swkm.reason_time, '%d.%m.%Y %H:%i:%s') AS rTime,
         swkm.start_time AS rawGTime
-    FROM work_card_movement swkm
+    FROM work_card_movement_test swkm
     LEFT JOIN objects o ON o.id = swkm.id_object
     WHERE
         swkm.send_time != '0000-00-00 00:00:00' AND
