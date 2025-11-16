@@ -333,10 +333,10 @@ if(!defined('INCLUDE_CHECK')) die('You are not allowed to execute this file dire
 function update_alarm_status( $aID, $alarm_status, $idUser, $alarm_reason ) {
 
 	global $db_sod;
-
+//die("aID: ".$aID." / alarm_status:".$alarm_status." / user:".$idUser." / alarm_reason:".$alarm_reason );
 	$alarm_status_user = substr_replace( $alarm_status, "_user", -5 );
 	$aQuery  = "UPDATE work_card_movement_test SET ". $alarm_status ." = NOW(), ". $alarm_status_user."=". $idUser .", id_alarm_reasons = '". $alarm_reason ."', updated_user = ". $idUser ." WHERE id = ". $aID ." AND ". $alarm_status_user ." = 0 ";
-    $aResult = mysqli_query( $db_sod, $aQuery ) or die( print "ВЪЗНИКНА ГРЕШКА ПРИ ОПИТ ЗА ЗАПИС! ОПИТАЙТЕ ПО–КЪСНО!" );
+    $aResult = mysqli_query( $db_sod, $aQuery ) or die( print "<div class='alert alert-danger' role='alert'>ВЪЗНИКНА ГРЕШКА ПРИ ОПИТ ЗА ЗАПИС! ОПИТАЙТЕ ПО–КЪСНО!</div>" );
 
 }
 

@@ -264,6 +264,46 @@ function manualRefreshArchive() {
     loadArchiveContent();
 }
 
+document.addEventListener('click', async function (ev) {
+    const btn = ev.target.closest('.alarm-button');
+    if (!btn) return;
+
+    const aID = btn.dataset.aid;
+    const status = btn.dataset.status;
+
+    // 🔹 Логика за reason_time
+    if (status === 'reason_time') {
+
+        const selWith  = document.getElementById('reasonWithReaction');
+        const selNo    = document.getElementById('reasonNoReaction');
+
+        const v1 = selWith  ? parseInt(selWith.value) : 0;
+        const v2 = selNo    ? parseInt(selNo.value)   : 0;
+
+        // --- Изискване: трябва да има избрана поне една причина ---
+        if (v1 === 0 && v2 === 0) {
+            alert("Изберете причина за приключване (С реакция или Без реакция)!");
+            return;
+        }
+
+        // определяме правилната причина за изпращане
+        const reason = v1 !== 0 ? v1 : v2;
+
+        // изпращаме към PHP
+        await updateAlarmStatus(aID, 'reason_time', reason);
+
+        // презареждаме компонента
+        loadAlarmInfo(aID);
+
+        return;
+    }
+
+    // 🔹 Оставаме старата логика за start_time и end_time
+    await updateAlarmStatus(aID, status);
+    loadAlarmInfo(aID);
+});
+
+
 // =========================
 // Google Map + Car Visualization (patched for HtmlMarker hoisting & safety)
 // =========================
