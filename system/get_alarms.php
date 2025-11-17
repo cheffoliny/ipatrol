@@ -29,6 +29,7 @@ foreach ($alarms as $row) {
 
 $html = ob_get_clean();
 
+
 echo json_encode([
     'html' => $html,
     'hasActiveSound' => $hasNewAlarm
