@@ -7,6 +7,7 @@ let alarmActive = false;
 let soundEnabled = true; // по подразбиране Вкл.
 let isAndroidWebView = false;
 let isDesktopBrowser = false;
+let alarmIsPlaying = false;
 
 // --- Засичане на платформата ---
 function detectEnvironment() {
@@ -115,42 +116,20 @@ function hideAlarmIndicator() {
 
 // --- Стартиране на аларма ---
 function triggerAlarmSound() {
-    if (!soundEnabled) {
-        console.log('🔇 Sound disabled by user');
-        return;
-    }
+    if (alarmIsPlaying) return;
+    alarmIsPlaying = true;
 
-    showAlarmIndicator();
-
-    if (isAndroidWebView) {
-        // Използва се нативен плейбек за background
-        callAndroidSound(1);
-    } else {
-        initBrowserSound();
-        if (alarmSound) {
-            alarmSound.play().catch(err => {
-                // някои браузъри могат да блокират autoplay, но имаме визуализация и ще опитаме пак при interaction
-                console.warn('🔇 Play error (browser):', err);
-            });
-        }
+    if (typeof Android !== "undefined") {
+        Android.playSound("alarm", "true"); // alarm.mp3 → raw/alarm.mp3
     }
 }
 
-// --- Спиране на аларма ---
 function stopAlarmSound() {
-    hideAlarmIndicator();
+    if (!alarmIsPlaying) return;
+    alarmIsPlaying = false;
 
-    if (isAndroidWebView) {
-        callAndroidSound(0);
-    } else if (alarmSound) {
-        try {
-            if (!alarmSound.paused) {
-                alarmSound.pause();
-                alarmSound.currentTime = 0;
-            }
-        } catch (err) {
-            console.warn('⚠️ stopAlarmSound error:', err);
-        }
+    if (typeof Android !== "undefined") {
+        Android.playSound("alarm", "stop");
     }
 }
 
@@ -196,41 +175,38 @@ function updateAlarmsFromServer(response) {
 // --- Избор на аларма (зареждане в main-content) ---
 function selectAlarm(aID, oName) {
 
-    // Визуално маркираме избраната аларма
     $('#alarmPanel li').removeClass('active');
     $('#alarm-' + aID).addClass('active');
 
-    // Изпращаме stop_play = 1
-    $.post('system/update_alarm.php', { aID: aID }, function(res) {
-        // След като stop_play е сменено → презареждаме алармите
+    // Stop sound at server
+    $.post('system/update_alarm.php', { aID }, function() {
         loadAlarms();
     }, 'json');
 
-    // Показваме зареждане
+    // UI loading
     $('.main-content').html(`
         <div class="text-center py-5 text-muted">
-            <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br>Зареждане на данните за ${oName}...
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br>
+            Зареждане на данните за ${oName}...
         </div>
     `);
 
-    // Зареждаме информацията за алармата
     $.ajax({
         url: 'system/alarms_info.php',
         method: 'GET',
-        data: { aID: aID },
+        data: { aID },
         success: function (html) {
             $('.main-content').html(html);
         },
         error: function () {
             $('.main-content').html(`
                 <div class="alert alert-danger m-3">
-                    ⚠️ Грешка при зареждане на информацията за алармата.
+                    ⚠️ Грешка при зареждане на информацията.
                 </div>
             `);
         }
     });
 }
-
 
 
 // --- Ръчен бутон за звук (toggle) ---
