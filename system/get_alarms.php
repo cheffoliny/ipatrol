@@ -4,10 +4,13 @@ require_once '../session_init.php';
 require_once '../config.php';
 require_once '../includes/functions.php';
 
-if (!$_SESSION['user_id']) {
+if (!isset($_SESSION['user_id']) || !$_SESSION['user_id']) {
     http_response_code(403);
-    exit('Access denied.');
+    exit(json_encode(['html' => '<li class="list-group-item bg-danger text-white">Access denied.</li>', 'hasActiveSound' => false]));
 }
+
+// buffer за HTML
+ob_start();
 
 // ------------------------------------------------------
 // Вземаме всички активни аларми
@@ -18,6 +21,7 @@ $aQuery = "
         swkm.obj_name AS oName,
         o.address AS oAddr,
         o.operativ_info AS oInfo,
+        swkm.stop_play AS stopPlay, 
         DATE_FORMAT(swkm.alarm_time, '%H:%i:%s') AS aTime,
         DATE_FORMAT(swkm.send_time, '%d.%m.%Y %H:%i:%s') AS sTime,
         DATE_FORMAT(swkm.start_time, '%d.%m.%Y %H:%i:%s') AS gTime,
@@ -39,7 +43,7 @@ $aQuery = "
 $aResult = mysqli_query($db_sod, $aQuery) or die("Error: ".$aQuery);
 $num_aRows = mysqli_num_rows($aResult);
 
-$hasNewAlarm = false;
+$hasActiveAlarmSound = false; // true ако има поне една със stop_play = 0
 
 if (!$num_aRows) {
     echo '<li class="list-group-item bg-secondary text-white py-4 px-3 text-center">
@@ -54,27 +58,33 @@ if (!$num_aRows) {
         $rawG  = $aRow['rawGTime'];
         $oAddr = htmlspecialchars($aRow['oAddr']);
         $oInfo = htmlspecialchars($aRow['oInfo']);
+        $stopPlay = intval($aRow['stopPlay']);
 
-        // --- Определяне на цвета ---
-        if ($rawG == '0000-00-00 00:00:00') {
+        // --- Определяне на цвета/indicator ---
+        // Класовете остават за UI, но решението за play/stop идва от $stopPlay
+        if ($stopPlay === 0) {
             $strClass = 'list-group-item bg-danger text-white alarm-new';
-            $hasNewAlarm = true;
+            $hasActiveAlarmSound = true;
         } else {
             $strClass = 'list-group-item bg-info text-white';
         }
 
         echo "
         <li id='alarm-$aID' class='$strClass'
-            onclick='selectAlarm($aID, \"$oName\")'>
+            onclick='selectAlarm($aID, \"{$oName}\")' style='cursor:pointer;'>
             <div class='fw-bold'>$oName</div>
             <div class='mt-1'><i class='fa-solid fa-bell me-1'></i> $aTime</div>
         </li>";
     }
 }
-//          <div class='small text-white-50'>$oAddr</div>
 
-// --- Ако има нови аларми, изпращаме флаг ---
-// if ($hasNewAlarm) {
-//     echo "<script>triggerAlarmSound();</script>";
-// }
-?>
+// взимаме HTML
+$html = ob_get_clean();
+
+// върнем JSON отговор
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode([
+    'html' => $html,
+    'hasActiveSound' => $hasActiveAlarmSound
+], JSON_UNESCAPED_UNICODE);
+exit;

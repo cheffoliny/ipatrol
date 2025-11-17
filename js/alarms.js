@@ -1,11 +1,10 @@
 // js/alarms.js (full patched version)
-
-// === alarms.js ===
+// === js/alarms.js ===
 
 // --- Глобални променливи ---
 let alarmSound = null;
 let alarmActive = false;
-let soundEnabled = true; // звукът по подразбиране е активен
+let soundEnabled = true; // по подразбиране Вкл.
 let isAndroidWebView = false;
 let isDesktopBrowser = false;
 
@@ -13,45 +12,58 @@ let isDesktopBrowser = false;
 function detectEnvironment() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
 
-    if (/Android/i.test(ua) && /wv/.test(ua)) {
+    // Често WebView съдържа 'wv' или 'Android' + наличието на нативен обект
+    if (/Android/i.test(ua) && (/(wv|Version\/)/i.test(ua) || typeof Android !== 'undefined')) {
         isAndroidWebView = true;
-        console.log('📱 Android WebView');
+        console.log('📱 Android WebView detected');
     } else {
         isDesktopBrowser = true;
-        console.log('💻 Desktop/Browser');
+        console.log('💻 Desktop / Mobile Browser detected');
     }
 }
 detectEnvironment();
 
+
 // --- Извикване на Android метод ---
 function callAndroidSound(state) {
+    // state: 1 = play, 0 = stop
     try {
-        if (typeof Android !== 'undefined' && typeof Android.playSoundAlarm === 'function') {
-            Android.playSoundAlarm(state);
-        } else if (typeof playSoundAlarm === 'function') {
-            playSoundAlarm(state);
-        } else {
-            console.warn('⚠️ Няма Android метод за звук.');
+        if (isAndroidWebView) {
+            if (typeof Android !== 'undefined' && typeof Android.playSoundAlarm === 'function') {
+                Android.playSoundAlarm(state);
+            } else if (typeof playSoundAlarm === 'function') {
+                // fallback: global function injected differently
+                playSoundAlarm(state);
+            } else {
+                console.warn('⚠️ Android interface не е достъпен.');
+            }
         }
     } catch (err) {
-        console.error('❌ Android звук грешка:', err);
+        console.error('❌ callAndroidSound error:', err);
     }
 }
 
 // --- Инициализация на звука за браузър ---
 function initBrowserSound() {
-    if (!alarmSound) {
+    if (alarmSound || isAndroidWebView) return;
+    try {
         alarmSound = new Audio('sounds/alarm.mp3');
         alarmSound.loop = true;
-        console.log('🔊 Инициализация на звук.');
+        // Предложение: малък volume по подразбиране
+        alarmSound.volume = 0.9;
+        console.log('🔊 Browser audio initialized');
+    } catch (err) {
+        console.warn('⚠️ Неуспешна инициализация на Audio:', err);
     }
 }
 
 // --- Разрешаване на звука при първо взаимодействие (браузър) ---
-if (isDesktopBrowser) {
+if (!isAndroidWebView) {
+    // слушаме първо взаимодействие така, че autoplay policy да не блокира
     document.addEventListener('click', initBrowserSound, { once: true });
     document.addEventListener('keydown', initBrowserSound, { once: true });
 }
+
 
 // --- Показване на визуален индикатор ---
 function showAlarmIndicator() {
@@ -103,13 +115,24 @@ function hideAlarmIndicator() {
 
 // --- Стартиране на аларма ---
 function triggerAlarmSound() {
-    if (!soundEnabled) return;
+    if (!soundEnabled) {
+        console.log('🔇 Sound disabled by user');
+        return;
+    }
+
     showAlarmIndicator();
 
     if (isAndroidWebView) {
+        // Използва се нативен плейбек за background
         callAndroidSound(1);
-    } else if (alarmSound) {
-        alarmSound.play().catch(err => console.warn('🔇 Play error:', err));
+    } else {
+        initBrowserSound();
+        if (alarmSound) {
+            alarmSound.play().catch(err => {
+                // някои браузъри могат да блокират autoplay, но имаме визуализация и ще опитаме пак при interaction
+                console.warn('🔇 Play error (browser):', err);
+            });
+        }
     }
 }
 
@@ -119,57 +142,98 @@ function stopAlarmSound() {
 
     if (isAndroidWebView) {
         callAndroidSound(0);
-    } else if (alarmSound && !alarmSound.paused) {
-        alarmSound.pause();
-        alarmSound.currentTime = 0;
+    } else if (alarmSound) {
+        try {
+            if (!alarmSound.paused) {
+                alarmSound.pause();
+                alarmSound.currentTime = 0;
+            }
+        } catch (err) {
+            console.warn('⚠️ stopAlarmSound error:', err);
+        }
+    }
+}
+
+// --- Обновяване на алармите (извиква се от sidebar.js -> loadAlarms) ---
+// Тази функция очаква да се вика с обект (response) от get_alarms.php
+function updateAlarmsFromServer(response) {
+    // response.html, response.hasActiveSound (true ако има stop_play = 0)
+    if (!response) return;
+
+    // Поставяме HTML
+    $('#alarmPanel').html(response.html);
+
+    // Синхронизация на звука според DB флага
+    if (response.hasActiveSound) {
+        if (!alarmActive) {
+            triggerAlarmSound();
+        } else {
+            // вече активна
+            console.log('🔔 Alarm already active');
+        }
+    } else {
+        if (alarmActive) {
+            stopAlarmSound();
+        } else {
+            console.log('🔕 No active alarms (DB)');
+        }
     }
 }
 
 // --- Обновяване на алармите ---
-function updateAlarms(data) {
-    $('#alarmPanel').html(data);
-
-    const hasActiveAlarm = $('#alarmPanel .bg-danger, #alarmPanel .alarm-new').length > 0;
-
-    if (hasActiveAlarm && !alarmActive) {
-        triggerAlarmSound();
-    } else if (!hasActiveAlarm && alarmActive) {
-        stopAlarmSound();
-    }
-}
+// function updateAlarms(data) {
+//     $('#alarmPanel').html(data);
+//
+//     const hasActiveAlarm = $('#alarmPanel .bg-danger, #alarmPanel .alarm-new').length > 0;
+//
+//     if (hasActiveAlarm && !alarmActive) {
+//         triggerAlarmSound();
+//     } else if (!hasActiveAlarm && alarmActive) {
+//         stopAlarmSound();
+//     }
+// }
 
 // --- Избор на аларма (зареждане в main-content) ---
 function selectAlarm(aID, oName) {
-    // Визуален ефект при избор
+
+    // Визуално маркираме избраната аларма
     $('#alarmPanel li').removeClass('active');
     $('#alarm-' + aID).addClass('active');
 
-    // Зареждане на съдържанието в main-content
+    // Изпращаме stop_play = 1
+    $.post('system/update_alarm.php', { aID: aID }, function(res) {
+        // След като stop_play е сменено → презареждаме алармите
+        loadAlarms();
+    }, 'json');
+
+    // Показваме зареждане
     $('.main-content').html(`
         <div class="text-center py-5 text-muted">
             <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br>Зареждане на данните за ${oName}...
         </div>
     `);
 
+    // Зареждаме информацията за алармата
     $.ajax({
         url: 'system/alarms_info.php',
         method: 'GET',
         data: { aID: aID },
         success: function (html) {
             $('.main-content').html(html);
-            stopAlarmSound();
         },
         error: function () {
             $('.main-content').html(`
                 <div class="alert alert-danger m-3">
-                    ⚠️ Възникна грешка при зареждане на информацията за алармата.
+                    ⚠️ Грешка при зареждане на информацията за алармата.
                 </div>
             `);
         }
     });
 }
 
-// --- Ръчен бутон за звук ---
+
+
+// --- Ръчен бутон за звук (toggle) ---
 $(document).ready(function () {
     $('#toggleSoundBtn').on('click', function () {
         soundEnabled = !soundEnabled;
@@ -178,7 +242,14 @@ $(document).ready(function () {
 
         $(this).html(`<i class="fa-solid ${icon} me-1"></i> ${text}`);
 
-        if (!soundEnabled && alarmActive) stopAlarmSound();
+        if (!soundEnabled && alarmActive) {
+            // спираме и нативния/браузърния звук
+            stopAlarmSound();
+        } else if (soundEnabled) {
+            // ако има активна аларма в UI — пускаме (но най-добре ползваме loadAlarms -> сървър флаг)
+            // Няма да опитваме да пускаме звук от тук без актуална информация
+            console.log('🔊 Sound enabled by user');
+        }
     });
 });
 
