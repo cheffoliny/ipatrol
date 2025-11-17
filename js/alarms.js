@@ -1107,3 +1107,48 @@ window.updateCarFromWebView = function(lat, lng, speed, bearing, accuracy, altit
         console.error('updateCarFromWebView error', e);
     }
 };
+
+
+let autoAlarmInterval = null;
+
+function startAutoAddAlarms() {
+
+    // Ако вече работи – не стартирай втори интервал
+    if (autoAlarmInterval !== null) return;
+
+    autoAlarmInterval = setInterval(() => {
+
+        $.ajax({
+            url: 'includes/auto_add_alarm.php',
+            type: 'GET',
+            cache: false,
+            timeout: 4000,
+
+            success: function (response) {
+                // Скриптът няма да връща данни, само грешки при нужда
+                // Ако има текст → това може да е грешка
+                if (typeof response === "string" && response.length > 0) {
+                    console.warn("auto_add_alarm.php response:", response);
+                }
+            },
+
+            error: function (xhr, status, error) {
+                // Показваме само реални грешки (403, timeout и т.н.)
+                console.error("auto_add_alarm AJAX error:", status, error);
+            }
+        });
+
+    }, 5000);
+}
+
+//function stopAutoAddAlarms() {
+//    if (autoAlarmInterval !== null) {
+//        clearInterval(autoAlarmInterval);
+//        autoAlarmInterval = null;
+//    }
+//}
+
+// Стартираме автоматично при зареждане
+$(document).ready(function () {
+    startAutoAddAlarms();
+});
