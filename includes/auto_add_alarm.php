@@ -2,6 +2,7 @@
 define('INCLUDE_CHECK', true);
 require_once '../session_init.php';
 require_once '../config.php';
+require_once '../includes/functions.php';
 
 // Проверка за сесия
 if (empty($_SESSION["user_id"])) {
@@ -21,9 +22,6 @@ global $db_sod;
     $alarm_to_open_time = 15;
 
     ob_start();
-
-
-    set_error_handler('handle_drop');
 
     list( $maxID, $mTable ) = get_max_id_archiv(); //*** GET LAST ID_ARCHIV in CASE OF EMPTY RESULT FOR ALARMS ***//
 
