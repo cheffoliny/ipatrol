@@ -24,7 +24,6 @@ function detectEnvironment() {
 }
 detectEnvironment();
 
-
 // --- Извикване на Android метод ---
 function callAndroidSound(state) {
     // state: 1 = play, 0 = stop
