@@ -10,6 +10,8 @@ if (!$_SESSION['user_id']) {
     exit('Access denied.');
 }
 
+global $db_sod;
+
 $aID = intval($_GET['aID'] ?? 0);
 $alarm_status = $_GET['alarm_status'] ?? '';
 $alarm_reason = intval($_GET['alarm_reason'] ?? 0);
@@ -85,44 +87,82 @@ function diffBadge($timeDiff)
     return "<span class='badge float-end $color'>{$h}{$m}{$s}</span>";
 }
 
-$strClassStart = ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary';
-$strBtnStart = ($gTime == '00.00.0000 00:00:00') ? 'id="start_time" data-status="start_time" data-aid="'.$aID.'"' : 'disabled="disabled"';
-$strClassEnd = ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary';
-$strBtnEnd = ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'id="end_time" data-status="end_time" data-aid="'.$aID.'"' : 'disabled="disabled"';
-$strClassReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary';
-$strBtnReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'id="reason_time" data-status="reason_time" data-aid="'.$aID.'"' : 'disabled="disabled"';
-$strSelectReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? '' : 'disabled="disabled"';
-
 $strMapModal = 'modalMap'.$oID;
+$strReasonModal = 'modalReason'.$aID;
+
+
+$sClassStart = ($gTime == '00.00.0000 00:00:00') ? 'alarm-button bg-danger' : 'bg-secondary';
+
+$sClassEnd = ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00')
+    ? 'alarm-button bg-warning text-dark'
+    : 'bg-secondary';
+
+$strClassReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00')
+    ? 'alarm-button bg-success text-dark'
+    : 'bg-secondary';
+
+$strBtnStart = ($gTime == '00.00.0000 00:00:00')
+    ? 'id="start_time" data-status="start_time" data-aid="'.$aID.'"'
+    : '';
+
+$strBtnEnd = ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00')
+    ? 'id="end_time" data-status="end_time" data-aid="'.$aID.'"'
+    : '';
+
+$strBtnReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00')
+    ? 'id="reason_time" data-status="reason_time" data-aid="'.$aID.'" data-bs-toggle="modal" data-bs-target="#modalReason_'.$aID.'"'
+    : '';
+
 
 // ===========================
 // 🧱 HTML изход
 // ===========================
 ?>
-<div id="alarm-info-container" class="row px-0 mx-0 mb-2">
-    <div class="col p-2 m-1 text-white alarm-button <?= $strClassStart ?>" style="cursor:pointer; height:96px" <?= $strBtnStart?> >
-        <div class="d-flex justify-content-between">
-            <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
+<div id="alarm-info-container" class="px-0 mx-0">
+
+    <div id="alarm-status-container" class="row p-0 m-0" data-aid="<?= $aID ?>">
+
+        <!-- START_TIME -->
+        <div class="col p-2 my-1 mx-0 text-white <?= isset($strClassStart) ? $strClassStart : $sClassStart; ?>"
+             style="cursor:pointer; height:96px"
+            <?= $strBtnStart ?>>
+
+            <div class="d-flex justify-content-between">
+                <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
+            </div>
+
+            <small><?= htmlspecialchars($psName) ?></small><br>
+            <small>[<?= substr($gTime, 10, 10) ?>]</small>
         </div>
-        <small><?= htmlspecialchars($psName) ?></small><br>
-        <small>[<?= substr($gTime, 10, 10) ?>]</small>
+
+        <!-- END_TIME -->
+        <div class="col p-2 my-1 mx-1 text-white <?= isset($strClassEnd) ? $strClassEnd : $sClassEnd; ?>"
+             style="cursor:pointer; height:96px"
+            <?= $strBtnEnd ?>>
+
+            <div class="d-flex justify-content-between">
+                <h6>НА ОБЕКТА</h6><?= diffBadge($timeToObject) ?>
+            </div>
+
+            <small><?= htmlspecialchars($poName) ?></small><br>
+            <small>[<?= substr($oTime, 10, 10) ?>]</small>
+        </div>
+
+        <!-- REASON_TIME -->
+        <div class="col p-2 my-1 mx-0 text-white <?= $strClassReason ?>"
+             style="cursor:pointer; height:96px"
+            <?= $strBtnReason ?>>
+
+            <div class="d-flex justify-content-between">
+                <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToEnd) ?>
+            </div>
+
+            <small><?= htmlspecialchars($prName) ?></small><br>
+            <small>[<?= substr($rTime, 10, 10) ?>]</small>
+        </div>
+
     </div>
 
-    <div class="col p-2 my-1 mx-0 text-white alarm-button <?= $strClassEnd ?>" style="cursor:pointer; height:96px" <?= $strBtnEnd; ?> >
-        <div class="d-flex justify-content-between">
-            <h6>НА ОБЕКТА</h6><?= diffBadge($timeToObject) ?>
-        </div>
-        <small><?= htmlspecialchars($poName) ?></small><br>
-        <small>[<?= substr($oTime, 10, 10) ?>]</small>
-    </div>
-
-   <div class="col p-2 my-1 mx-0 text-white alarm-button <?= $strClassEnd ?>" data-bs-toggle="modal" data-bs-target="#modalEndAlarm" style="cursor:pointer; height:96px">
-       <div class="d-flex justify-content-between">
-           <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToObject) ?>
-       </div>
-       <small><?= htmlspecialchars($poName) ?></small><br>
-       <small>[<?= substr($oTime, 10, 10) ?>]</small>
-   </div>
 
     <div class="card bg-dark text-white border-secondary">
         <div class="card-header d-flex justify-content-between align-items-center py-0">
@@ -168,7 +208,7 @@ $strMapModal = 'modalMap'.$oID;
 
 
 <!-- Модал за ПРИКЛЮЧВАНЕ НА АЛАРМА -->
-<div class="modal fade" id="modalEndAlarm" tabindex="-1">
+<div class="modal fade" id="<?= $strReasonModal ?>" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content bg-dark text-white">
             <div class="modal-header border-secondary">
@@ -176,30 +216,29 @@ $strMapModal = 'modalMap'.$oID;
                 <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-1">
-                 <div style="height: 96px !important;" class="col p-0 m-1">
-                        <div class="d-flex justify-content-between w-100 p-0">
-                            <div class="w-50 h-100 py-0 mr-2">
-                                <select id="reasonWithReaction" onchange="reset_select_reasons()" <?= $strSelectReason ?> class="form-select form-select-sm border-primary shadow-sm text-white pt-4 py-5 m-0 border border-success <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary'; ?>">
-                                    <option value="0">С РЕАКЦИЯ</option>";
-                                    <?php render_alarm_reasons(1); ?>
-                                </select>
-                            </div>
-                            <div class="w-50 py-0">
-                                <select id="reasonNoReaction" onchange="reset_select_reasons()" <?= $strSelectReason ?> class="form-select form-select-sm border-primary shadow-sm text-white pt-4 pb-5 m-0 border border-danger <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-danger text-dark' : 'bg-secondary'; ?>">
-                                    <option value="0">БЕЗ РЕАКЦИЯ</option>";
-                                    <?php render_alarm_reasons(0); ?>
-                                </select>
-                            </div>
+                <div style="height: 96px !important;" class="col p-0 m-1">
+                    <div class="d-flex justify-content-between w-100 p-0">
+                        <div class="w-50 h-100 py-0 me-1 mx-0">
+                            <select id="reasonWithReaction" onchange="reset_select_reasons()" class="form-select form-select-sm border-primary shadow-sm text-white pt-4 py-5 m-0 border border-success <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary'; ?>">
+                                <option value="0">С РЕАКЦИЯ</option>";
+                                <?php render_alarm_reasons(1); ?>
+                            </select>
+                        </div>
+                        <div class="w-50 py-0">
+                            <select id="reasonNoReaction" onchange="reset_select_reasons()" class="form-select form-select-sm border-primary shadow-sm text-white pt-4 pb-5 m-0 border border-danger <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-danger text-dark' : 'bg-secondary'; ?>">
+                                <option value="0">БЕЗ РЕАКЦИЯ</option>";
+                                <?php render_alarm_reasons(0); ?>
+                            </select>
                         </div>
                     </div>
-                    <!-- БУТОН ПРИКЛЮЧИ -->
-                    <div class="col p-2 m-1 text-white alarm-button <?= $strClassReason ?>" style="cursor:pointer; height:96px" <?= $strBtnReason ?> >
-                        <div class="d-flex justify-content-between">
-                            <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToEnd) ?>
-                        </div>
-                        <small><?= htmlspecialchars($prName) ?></small><br>
-                        <small>[<?= substr($rTime, 10, 10) ?>]</small>
+                </div>
+                <!-- БУТОН ПРИКЛЮЧИ -->
+                <div class="col p-2 m-1 text-white alarm-button <?= $strClassReason ?>" style="cursor:pointer; height:96px" id="reason_time" data-status="reason_time" data-aid="<?= $aID ?>">
+                    <div class="d-flex justify-content-between">
+                        <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToEnd) ?>
                     </div>
+                    <small><?= htmlspecialchars($prName) ?></small><br>
+                    <small>[<?= substr($rTime, 10, 10) ?>]</small>
                 </div>
             </div>
         </div>
@@ -237,14 +276,33 @@ $strMapModal = 'modalMap'.$oID;
 </div>
 
 <script>
+
 document.addEventListener("click", function(e) {
     const box = e.target.closest(".alarm-button");
     if (!box) return;
 
     const aID = box.dataset.aid;
     const status = box.dataset.status;
+    const rModal = "modalReason" + aID;
 
     if (!aID || !status) return;
+
+
+    //alert("1" + status + " / " + rModal);
+
+    if (aID > 0 && status === "reason_time") {
+
+        // взимаме елемента по ID
+        const modalEl = document.getElementById(rModal);
+
+        if (modalEl) {
+            // взимаме инстанцията на Bootstrap модал или създаваме нова
+            const modalInstance = bootstrap.Modal.getInstance(modalEl)
+                || bootstrap.Modal.getOrCreateInstance(modalEl);
+
+            modalInstance.hide(); // коректно затваряне
+        }
+    }
 
     // визуално "натискане"
     box.style.opacity = "0.6";
@@ -285,5 +343,97 @@ function reset_select_reasons() {
     });
 
 }
+
+
+function refreshAlarmInfo(aID) {
+    $.ajax({
+        url: "system/get_alarm_status.php",
+        method: "GET",
+        data: { aid: aID },
+        dataType: "json",
+
+        success: function (res) {
+            if (!res) return;
+
+            // ------------------------
+            //  START BLOCK
+            // ------------------------
+            let startBlock = $("#block-start, #start_time");
+            startBlock.attr("class", "col p-2 my-1 mx-0 text-white " + res.strClassStart);
+
+            if (res.isStartEnabled) {
+                startBlock
+                    .attr("id", "start_time")
+                    .attr("data-status", "start_time")
+                    .attr("data-aid", aID);
+            } else {
+                $("#start_time")
+                    .removeAttr("data-status data-aid")
+                    .removeAttr("id")
+                    .attr("id", "block-start");
+            }
+
+            $("#text-start-name").text(res.psName);
+            $("#text-start-time").text("[" + res.gTimeShort + "]");
+
+            // ------------------------
+            //  END BLOCK
+            // ------------------------
+            let endBlock = $("#block-end, #end_time");
+            endBlock.attr("class", "col p-2 my-1 mx-1 text-white " + res.strClassEnd);
+
+            if (res.isEndEnabled) {
+                endBlock
+                    .attr("id", "end_time")
+                    .attr("data-status", "end_time")
+                    .attr("data-aid", aID);
+            } else {
+                $("#end_time")
+                    .removeAttr("data-status data-aid")
+                    .removeAttr("id")
+                    .attr("id", "block-end");
+            }
+
+            $("#text-end-name").text(res.poName);
+            $("#text-end-time").text("[" + res.oTimeShort + "]");
+
+            // ------------------------
+            //  REASON BLOCK
+            // ------------------------
+            let reasonBlock = $("#block-reason, #reason_time");
+            reasonBlock.attr("class", "col p-2 my-1 mx-0 text-white " + res.strClassReason);
+
+            if (res.isReasonEnabled) {
+                reasonBlock
+                    .attr("id", "reason_time")
+                    .attr("data-status", "reason_time")
+                    .attr("data-aid", aID)
+                    .attr("data-bs-toggle", "modal")
+                    .attr("data-bs-target", "#" + res.reasonModal);
+            } else {
+                $("#reason_time")
+                    .removeAttr("data-status data-aid data-bs-toggle data-bs-target")
+                    .removeAttr("id")
+                    .attr("id", "block-reason");
+            }
+
+            $("#text-reason-name").text(res.prName);
+            $("#text-reason-time").text("[" + res.rTimeShort + "]");
+        }
+    });
+}
+
+
+// ===============================
+//  AUTO REFRESH НА ВСЕКИ 5 СЕК.
+// ===============================
+let alarmID = $("#alarm-status-container").attr("data-aid");
+
+if (alarmID) {
+    setInterval(() => {
+        refreshAlarmInfo(alarmID);
+    }, 5000);
+}
+
 
 </script>
