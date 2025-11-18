@@ -116,30 +116,13 @@ $strMapModal = 'modalMap'.$oID;
         <small>[<?= substr($oTime, 10, 10) ?>]</small>
     </div>
 
-    <div style="height: 96px !important;" class="col p-0 m-1">
-        <div class="d-flex justify-content-between w-100 p-0">
-            <div class="w-50 h-100 py-0 mr-2">
-                <select id="reasonWithReaction" onchange="reset_select_reasons()" <?= $strSelectReason ?> class="form-select form-select-sm border-primary shadow-sm text-white pt-4 py-5 m-0 border border-success <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary'; ?>">
-                    <option value="0">С РЕАКЦИЯ</option>";
-                    <?php render_alarm_reasons(1); ?>
-                </select>
-            </div>
-            <div class="w-50 py-0">
-                <select id="reasonNoReaction" onchange="reset_select_reasons()" <?= $strSelectReason ?> class="form-select form-select-sm border-primary shadow-sm text-white pt-4 pb-5 m-0 border border-danger <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-danger text-dark' : 'bg-secondary'; ?>">
-                    <option value="0">БЕЗ РЕАКЦИЯ</option>";
-                    <?php render_alarm_reasons(0); ?>
-                </select>
-            </div>
-        </div>
-    </div>
-    <!-- БУТОН ПРИКЛЮЧИ -->
-    <div class="col p-2 m-1 text-white alarm-button <?= $strClassReason ?>" style="cursor:pointer; height:96px" <?= $strBtnReason ?> >
-        <div class="d-flex justify-content-between">
-            <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToEnd) ?>
-        </div>
-        <small><?= htmlspecialchars($prName) ?></small><br>
-        <small>[<?= substr($rTime, 10, 10) ?>]</small>
-    </div>
+   <div class="col p-2 my-1 mx-0 text-white alarm-button <?= $strClassEnd ?>" data-bs-toggle="modal" data-bs-target="#modalEndAlarm" style="cursor:pointer; height:96px">
+       <div class="d-flex justify-content-between">
+           <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToObject) ?>
+       </div>
+       <small><?= htmlspecialchars($poName) ?></small><br>
+       <small>[<?= substr($oTime, 10, 10) ?>]</small>
+   </div>
 
     <div class="card bg-dark text-white border-secondary">
         <div class="card-header d-flex justify-content-between align-items-center py-0">
@@ -168,7 +151,7 @@ $strMapModal = 'modalMap'.$oID;
             <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
         </div>
 
-        <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2">
+        <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:none;">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <small class="text-info">
                     <i class="fa-solid fa-circle fa-xs me-1 text-success" id="archiveStatusIcon"></i>
@@ -184,6 +167,44 @@ $strMapModal = 'modalMap'.$oID;
 </div>
 
 
+<!-- Модал за ПРИКЛЮЧВАНЕ НА АЛАРМА -->
+<div class="modal fade" id="modalEndAlarm" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h6 class="modal-title">ПРИЧИНА</h6>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-1">
+                 <div style="height: 96px !important;" class="col p-0 m-1">
+                        <div class="d-flex justify-content-between w-100 p-0">
+                            <div class="w-50 h-100 py-0 mr-2">
+                                <select id="reasonWithReaction" onchange="reset_select_reasons()" <?= $strSelectReason ?> class="form-select form-select-sm border-primary shadow-sm text-white pt-4 py-5 m-0 border border-success <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary'; ?>">
+                                    <option value="0">С РЕАКЦИЯ</option>";
+                                    <?php render_alarm_reasons(1); ?>
+                                </select>
+                            </div>
+                            <div class="w-50 py-0">
+                                <select id="reasonNoReaction" onchange="reset_select_reasons()" <?= $strSelectReason ?> class="form-select form-select-sm border-primary shadow-sm text-white pt-4 pb-5 m-0 border border-danger <?= ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-danger text-dark' : 'bg-secondary'; ?>">
+                                    <option value="0">БЕЗ РЕАКЦИЯ</option>";
+                                    <?php render_alarm_reasons(0); ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- БУТОН ПРИКЛЮЧИ -->
+                    <div class="col p-2 m-1 text-white alarm-button <?= $strClassReason ?>" style="cursor:pointer; height:96px" <?= $strBtnReason ?> >
+                        <div class="d-flex justify-content-between">
+                            <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToEnd) ?>
+                        </div>
+                        <small><?= htmlspecialchars($prName) ?></small><br>
+                        <small>[<?= substr($rTime, 10, 10) ?>]</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Модал за обекта -->
 <div class="modal fade" id="modalObject" tabindex="-1">
