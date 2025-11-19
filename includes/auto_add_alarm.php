@@ -1,4 +1,5 @@
 <?php
+
 define('INCLUDE_CHECK', true);
 require_once '../session_init.php';
 require_once '../config.php';
@@ -10,7 +11,7 @@ if (empty($_SESSION["user_id"])) {
     exit("Not authorized");
 }
 
-global $db_sod;
+global $db_sod, $db_system;
 
     $id_person = intval($_SESSION["user_id"]);
 	// alarm_time - време на алармата;
@@ -82,14 +83,14 @@ global $db_sod;
         if( $isAlarm == 0 ) {
             $aQuery  = "INSERT INTO work_card_movement_test ( id_office, type, alarm_type, id_archiv_alarm, id_work_card, id_patrul, id_object, alarm_time, send_time, updated_time, obj_name, note )
                                 VALUES ( ".$offID.", 'object', '".$sID."', '".$arID."', 1, 1, ".$oID.", '".$mTime."', '".$send_time."', NOW(), '".$cName."', '".$maxID." ".$sID."' )";
-            $aResult = mysqli_query( $db_sod, $aQuery ) or die( print "ВЪЗНИКНА ГРЕШКА ПРИ ОПИТ ЗА ЗАПИС! ОПИТАЙТЕ ПО–КЪСНО!".$aQuery );
+            $aResult = mysqli_query( $db_sod, $aQuery ); // or die( print "ВЪЗНИКНА ГРЕШКА ПРИ ОПИТ ЗА ЗАПИС! ОПИТАЙТЕ ПО–КЪСНО!".$aQuery );
         }
 
     }
 
     // *** Update last checked ID archive *** //
     $sQuery	 = "UPDATE system_sod SET last_check_archiv_id = '$maxID'";
-    $sResult	=	mysqli_query( $db_system, $sQuery ) OR die( "".$sQuery );
+    $sResult =	mysqli_query( $db_system, $sQuery ); // OR die( "".$sQuery );
     // *** ****************************** *** //
 
     /*********/

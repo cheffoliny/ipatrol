@@ -351,45 +351,164 @@ function manualRefreshArchive() {
     loadArchiveContent();
 }
 
-document.addEventListener('click', async function (ev) {
-    const btn = ev.target.closest('.alarm-button');
-    if (!btn) return;
 
-    const aID = btn.dataset.aid;
-    const status = btn.dataset.status;
 
-    // 🔹 Логика за reason_time
-    if (status === 'reason_time') {
-
-        const selWith  = document.getElementById('reasonWithReaction');
-        const selNo    = document.getElementById('reasonNoReaction');
-
-        const v1 = selWith  ? parseInt(selWith.value) : 0;
-        const v2 = selNo    ? parseInt(selNo.value)   : 0;
-
-        // --- Изискване: трябва да има избрана поне една причина ---
-        if (v1 === 0 && v2 === 0) {
-            alert("Изберете причина за приключване (С реакция или Без реакция)!");
-            return;
-        }
-
-        // определяме правилната причина за изпращане
-        const reason = v1 !== 0 ? v1 : v2;
-
-        // изпращаме към PHP
-        await updateAlarmStatus(aID, 'reason_time', reason);
-
-        // презареждаме компонента
-        loadAlarmInfo(aID);
-
-        return;
-    }
-
-    // 🔹 Оставаме старата логика за start_time и end_time
-    await updateAlarmStatus(aID, status);
-    loadAlarmInfo(aID);
-});
-
+// alarms_info.php ЛОГИКА ЗА ПРЕЗАРЕЖДАНЕ
+// document.addEventListener('DOMContentLoaded', function () {
+//
+//     // Общ click listener за бутоните в status-блока
+//     document.addEventListener('click', async function (ev) {
+//         const btn = ev.target.closest('.alarm-button');
+//         if (!btn) return;
+//
+//         const aID = btn.dataset.aid;
+//         const status = btn.dataset.status;
+//
+//         // без aID или status — нищо не правим
+//         if (!aID || !status) return;
+//
+//         // Ако статусът е reason_time И бутонът е opener (този, който отваря модала)
+//         // той съдържа data-bs-toggle и data-bs-target — не правим update тук, оставяме Bootstrap да отвори модала
+//         if (status === 'reason_time' && btn.getAttribute('data-bs-toggle') === 'modal') {
+//             // позволяваме на Bootstrap модала да се отвори
+//             return;
+//         }
+//
+//         // visual feedback
+//         btn.style.opacity = "0.6";
+//
+//         try {
+//             // изпращаме заявка към alarms_info.php, която върши update (ако alarm_status) и връща обновения fragment
+//             const resp = await fetch("system/alarms_info.php?aID=" + aID + "&alarm_status=" + encodeURIComponent(status) + "&fragment=1");
+//             const html = await resp.text();
+//
+//             // обновяваме само status контейнера (без да пипаме модалите/картата/архива)
+//             const container = document.getElementById("alarm-status-container");
+//             if (container) {
+//                 //container.outerHTML = html;
+//                 if (container && html.trim() !== "") {
+//                     const newEl = new DOMParser().parseFromString(html, "text/html").body.firstElementChild;
+//                     if (newEl) container.replaceWith(newEl);
+//                 }
+//             }
+//         } catch (err) {
+//             console.error("Грешка при изпращане на заявката:", err);
+//         } finally {
+//             setTimeout(() => btn.style.opacity = "1", 200);
+//         }
+//     });
+//
+//     // handler за confirm бутона в модала (reason_time_confirm)
+//     document.addEventListener('click', async function (ev) {
+//         const btn = ev.target.closest('#reason_time_confirm');
+//         if (!btn) return;
+//
+//         const aID = btn.dataset.aid;
+//         if (!aID) return;
+//
+//         const selWith = document.getElementById('reasonWithReaction');
+//         const selNo   = document.getElementById('reasonNoReaction');
+//
+//         const v1 = selWith ? parseInt(selWith.value) : 0;
+//         const v2 = selNo ? parseInt(selNo.value) : 0;
+//
+//         if (v1 === 0 && v2 === 0) {
+//             alert("Изберете причина за приключване (С реакция или Без реакция)!");
+//             return;
+//         }
+//
+//         const reasonWith = v1 !== 0 ? v1 : 0;
+//         const reasonNo = v2 !== 0 ? v2 : 0;
+//
+//         // визуално
+//         btn.style.opacity = "0.6";
+//
+//         try {
+//             // изпращаме заявка и връщаме обновен fragment
+//             const url = "system/alarms_info.php?aID=" + aID + "&alarm_status=reason_time"
+//                 + "&reasonWithReaction=" + reasonWith
+//                 + "&reasonNoReaction=" + reasonNo
+//                 + "&fragment=1";
+//
+//             const resp = await fetch(url);
+//             const html = await resp.text();
+//
+//             // Скриваме модала (ако е отворен)
+//             const modalEl = document.getElementById('modalReason' + (document.querySelector('#alarm-info-container') ? document.querySelector('#alarm-info-container').dataset.oID : ''));
+//             // По-общо: затваряме всички bootstrap модали с id pattern modalReason*
+//             document.querySelectorAll('[id^="modalReason"]').forEach(mEl => {
+//                 const instance = bootstrap.Modal.getInstance(mEl) || bootstrap.Modal.getOrCreateInstance(mEl);
+//                 instance.hide();
+//             });
+//
+//             // Обновяваме само status контейнера
+//             const container = document.getElementById("alarm-status-container");
+//             if (container) {
+//                 //container.outerHTML = html;
+//                 if (container && html.trim() !== "") {
+//                     const newEl = new DOMParser().parseFromString(html, "text/html").body.firstElementChild;
+//                     if (newEl) container.replaceWith(newEl);
+//                 }
+//             }
+//
+//         } catch (err) {
+//             console.error("Грешка при запис на причина:", err);
+//         } finally {
+//             setTimeout(() => btn.style.opacity = "1", 200);
+//         }
+//     });
+//
+//     // select синхронизация
+//     window.reset_select_reasons = function () {
+//         const selWith = document.getElementById("reasonWithReaction");
+//         const selNo = document.getElementById("reasonNoReaction");
+//         if (!selWith || !selNo) return;
+//
+//         // ако са свързани през onchange (при DOM replace те ще бъдат презареждани)
+//         selWith.addEventListener("change", function () {
+//             if (this.value !== "0") selNo.value = "0";
+//         });
+//         selNo.addEventListener("change", function () {
+//             if (this.value !== "0") selWith.value = "0";
+//         });
+//     };
+//
+//     // ===============================
+//     //  AUTO REFRESH на status блока (fragment)
+//     // ===============================
+//     function getAlarmIDFromDom() {
+//         const wrapper = document.getElementById("alarm-status-container");
+//         return wrapper ? wrapper.getAttribute("data-aid") : null;
+//     }
+//
+//     let alarmID = getAlarmIDFromDom();
+//
+//     if (alarmID) {
+//         setInterval(async () => {
+//             try {
+//                 const resp = await fetch("system/alarms_info.php?aID=" + alarmID + "&fragment=1");
+//                 const html = await resp.text();
+//
+//                 // Не презаписваме ако потребител е с отворен modalReason* (прекратява UX)
+//                 const openReasonModal = document.querySelector('.modal.show[id^="modalReason"]');
+//                 if (!openReasonModal) {
+//                     const container = document.getElementById("alarm-status-container");
+//                     if (container) {
+//                         //container.outerHTML = html;
+//                         if (container && html.trim() !== "") {
+//                             const newEl = new DOMParser().parseFromString(html, "text/html").body.firstElementChild;
+//                             if (newEl) container.replaceWith(newEl);
+//                         }
+//                     }
+//                     // Обновяваме локалното alarmID препроверка
+//                     alarmID = getAlarmIDFromDom();
+//                 }
+//             } catch (err) {
+//                 console.error("Грешка при авто-обновяване:", err);
+//             }
+//         }, 5000);
+//     }
+// });
 
 /* ------------------------
    Универсален HtmlMarker (OverlayView) - лек HTML маркер
@@ -781,12 +900,11 @@ window.updateCarFromWebView = function(lat, lng, speed, bearing, accuracy, altit
     }
 };
 
-
 let autoAlarmInterval = null;
 
 function startAutoAddAlarms() {
 
-    // Ако вече работи – не стартирай втори интервал
+    // 🔒 Предпазване от стартиране на втори интервал
     if (autoAlarmInterval !== null) return;
 
     autoAlarmInterval = setInterval(() => {
@@ -798,15 +916,16 @@ function startAutoAddAlarms() {
             timeout: 4000,
 
             success: function (response) {
-                // Скриптът няма да връща данни, само грешки при нужда
-                // Ако има текст → това може да е грешка
-                if (typeof response === "string" && response.length > 0) {
-                    console.warn("auto_add_alarm.php response:", response);
+
+                // ✔ Вариант A: auto_add_alarm.php връща НЕЩО само при грешка или важен текст
+                if (response && typeof response === "string" && response.trim().length > 0) {
+                    console.warn("auto_add_alarm.php response:", response.trim());
                 }
+
+                // ❗ Няма нужда от друга логика — файлът сам добавя алармите в базата
             },
 
             error: function (xhr, status, error) {
-                // Показваме само реални грешки (403, timeout и т.н.)
                 console.error("auto_add_alarm AJAX error:", status, error);
             }
         });
@@ -814,14 +933,14 @@ function startAutoAddAlarms() {
     }, 5000);
 }
 
+// 🚀 Автоматично стартиране при зареждане
+$(document).ready(function () {
+    startAutoAddAlarms();
+});
+
 //function stopAutoAddAlarms() {
 //    if (autoAlarmInterval !== null) {
 //        clearInterval(autoAlarmInterval);
 //        autoAlarmInterval = null;
 //    }
 //}
-
-// Стартираме автоматично при зареждане
-$(document).ready(function () {
-    startAutoAddAlarms();
-});
