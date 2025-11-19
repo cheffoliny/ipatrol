@@ -1,33 +1,33 @@
 // // === Проверка на връзката към сървъра ===
-// function checkConnection() {
-//     $.ajax({
-//         url: 'system/connection_check.php',
-//         method: 'GET',
-//         dataType: 'json',
-//         success: function(res) {
-//             if (res.status === 'online') {
-//                 $('#connStatus').html(`
-//                     <div class="text-success small">
-//                         <i class="fa-solid fa-wifi me-1"></i> Онлайн
-//                     </div>
-//                 `);
-//             } else {
-//                 $('#connStatus').html(`
-//                     <div class="text-danger small">
-//                         <i class="fa-solid fa-wifi-slash me-1"></i> Няма връзка
-//                     </div>
-//                 `);
-//             }
-//         },
-//         error: function() {
-//             $('#connStatus').html(`
-//                 <div class="text-danger small">
-//                     <i class="fa-solid fa-wifi-slash me-1"></i> Няма връзка
-//                 </div>
-//             `);
-//         }
-//     });
-// }
+function checkConnection() {
+    $.ajax({
+        url: 'system/connection_check.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(res) {
+            if (res.status === 'online') {
+                $('#connStatus').html(`
+                    <div class="text-success small">
+                        <i class="fa-solid fa-wifi me-1"></i> Онлайн
+                    </div>
+                `);
+            } else {
+                $('#connStatus').html(`
+                    <div class="text-danger small">
+                        <i class="fa-solid fa-wifi-slash me-1"></i> Няма връзка
+                    </div>
+                `);
+            }
+        },
+        error: function() {
+            $('#connStatus').html(`
+                <div class="text-danger small">
+                    <i class="fa-solid fa-wifi-slash me-1"></i> Няма връзка
+                </div>
+            `);
+        }
+    });
+}
 //
 // // === Зареждане на аларми ===
 // // Зареждане на аларми с автоматично управление на звука
@@ -49,12 +49,7 @@
 //     });
 // }
 //
-// $(document).ready(function() {
-//     checkConnection();
-//     loadAlarms();
-//     setInterval(checkConnection, 3000);
-//     setInterval(loadAlarms, 5000);
-// });
+
 
 // === js/sidebar.js ===
 
@@ -139,3 +134,10 @@ function selectAlarm(aID, oName) {
         }
     });
 }
+
+$(document).ready(function() {
+    checkConnection();
+   // loadAlarms();
+    setInterval(checkConnection, 3000);
+    //setInterval(loadAlarms, 5000);
+});
