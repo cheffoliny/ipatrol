@@ -13,11 +13,11 @@
 <!--    </div>-->
 
     <!-- Статус на връзката -->
-    <div id="connStatus" class="text-center my-3">
+    <div id="connStatus" class="text-center my-0 py-0">
         <div class="text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Проверка...</div>
     </div>
-    <div class="text-center">
-        <a href="logout.php" class="btn btn-danger w-100 mt-3">
+    <div class="text-center py-0 my-0">
+        <a href="logout.php" class="btn btn-danger w-100">
             <i class="fa-solid fa-right-from-bracket me-1"></i> Изход
         </a>
     </div>
