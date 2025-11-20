@@ -22,20 +22,26 @@ $aQuery = "
         o.address AS oAddr,
         o.operativ_info AS oInfo,
         swkm.stop_play AS stopPlay, 
-        DATE_FORMAT(swkm.alarm_time, '%H:%i:%s') AS aTime,
-        DATE_FORMAT(swkm.send_time, '%d.%m.%Y %H:%i:%s') AS sTime,
-        DATE_FORMAT(swkm.start_time, '%d.%m.%Y %H:%i:%s') AS gTime,
-        DATE_FORMAT(swkm.end_time, '%d.%m.%Y %H:%i:%s') AS oTime,
-        DATE_FORMAT(swkm.reason_time, '%d.%m.%Y %H:%i:%s') AS rTime,
+        DATE_FORMAT(swkm.alarm_time,    '%H:%i:%s'          ) AS aTime,
+        DATE_FORMAT(swkm.send_time,     '%d.%m.%Y %H:%i:%s' ) AS sTime,
+        DATE_FORMAT(swkm.start_time,    '%d.%m.%Y %H:%i:%s' ) AS gTime,
+        DATE_FORMAT(swkm.end_time,      '%d.%m.%Y %H:%i:%s' ) AS oTime,
+        DATE_FORMAT(swkm.reason_time,   '%d.%m.%Y %H:%i:%s' ) AS rTime,
+
+        ROUND(UNIX_TIMESTAMP(COALESCE(swkm.send_time	, 0)),0) AS sendUnix,        
+        ROUND(UNIX_TIMESTAMP(COALESCE(swkm.start_time	, 0)),0) AS startUnix,
+        ROUND(UNIX_TIMESTAMP(COALESCE(swkm.end_time	    , 0)),0) AS endUnix,        
+        ROUND(UNIX_TIMESTAMP(COALESCE(swkm.reason_time  , 0)),0) AS reasonUnix,
+
         swkm.start_time AS rawGTime
     FROM work_card_movement_test swkm
     LEFT JOIN objects o ON o.id = swkm.id_object
     WHERE
-        swkm.send_time != '0000-00-00 00:00:00' AND
+        UNIX_TIMESTAMP(swkm.send_time) > 0 AND
         (
-            swkm.start_time = '0000-00-00 00:00:00' OR
-            swkm.end_time = '0000-00-00 00:00:00' OR
-            swkm.reason_time = '0000-00-00 00:00:00'
+            UNIX_TIMESTAMP(COALESCE(swkm.start_time,	0)) = 0 OR
+            UNIX_TIMESTAMP(COALESCE(swkm.end_time, 	0)) = 0 OR
+            UNIX_TIMESTAMP(COALESCE(swkm.reason_time, 0)) = 0
         )
     ORDER BY swkm.alarm_time DESC
 ";
@@ -56,6 +62,11 @@ if (!$num_aRows) {
         $aTime = $aRow['aTime'];
         $gTime = $aRow['gTime'];
         $rawG  = $aRow['rawGTime'];
+
+        $startUnix  = $aRow['startUnix' ];
+        $endUnix    = $aRow['endUnix'   ];
+        $reasonUnix = $aRow['reasonUnix'];
+
         $oAddr = htmlspecialchars($aRow['oAddr']);
         $oInfo = htmlspecialchars($aRow['oInfo']);
         $stopPlay = intval($aRow['stopPlay']);
@@ -63,10 +74,16 @@ if (!$num_aRows) {
         // --- Определяне на цвета/indicator ---
         // Класовете остават за UI, но решението за play/stop идва от $stopPlay
         if ($stopPlay === 0) {
-            $strClass = 'list-group-item bg-danger text-white alarm-new';
+            $strClass = 'list-group-item bg-danger text-white alarm-new border border-2 border-opacity-0 mt-0 mb-1 mx-1';
             $hasActiveAlarmSound = true;
+        } else if( $startUnix == 0 ) {
+            $strClass = 'list-group-item bg-danger text-white border border-light border-2 border-opacity-50 mt-0 mb-1 mx-1';
+        } else if( $startUnix > 0 && $endUnix == 0 ) {
+            $strClass = 'list-group-item bg-warning text-white border border-light border-2 border-opacity-50 mt-0 mb-1 mx-1';
+        } else if( $endUnix > 0 && $reasonUnix == 0 ) {
+            $strClass = 'list-group-item bg-success text-white border border-light border-2 border-opacity-5 mt-0 mb-1 mx-1';
         } else {
-            $strClass = 'list-group-item bg-info text-white';
+            $strClass = 'list-group-item bg-dark text-white mt-0 mb-1 mx-1';
         }
 
         echo "

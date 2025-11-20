@@ -237,13 +237,13 @@ function selectAlarm(aID, oName) {
         success: function (html) {
             $('.main-content').html(html);
         },
-        // error: function () {
-        //     $('.main-content').html(`
-        //         <div class="alert alert-danger m-3">
-        //             ⚠️ Грешка при зареждане на информацията за алармата.
-        //         </div>
-        //     `);
-        // }
+        error: function () {
+            $('.main-content').html(`
+                <div class="alert alert-danger m-3">
+                    ⚠️ Грешка при зареждане на информацията за алармата.
+                </div>
+            `);
+        }
     });
 }
 
