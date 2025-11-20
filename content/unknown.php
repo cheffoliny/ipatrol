@@ -78,7 +78,7 @@ $numRows = mysqli_num_rows($aResult);
 //   ФИЛТЪР ПО НАСЕЛЕНО МЯСТО
 // ========================================
 echo '
-<div class="row border-bottom border-secondary-subtle text-white py-2">
+<div class="row border-bottom border-secondary-subtle text-white p-2">
     <div class="col">
         <select id="cities" name="cities" class="form-select form-select-sm"
                 onchange="get_cities(); return false;">
@@ -115,15 +115,15 @@ while ($row = mysqli_fetch_assoc($aResult)) {
 
     // Основен ред
     echo '
-    <div class="row border-bottom border-secondary-subtle text-white py-2 align-items-center">
+    <div class="row border-bottom border-secondary-subtle text-white p-2 align-items-center">
 
-        <div class="col-6">
+        <div class="col-7">
             <span class="my-2"
                 style="cursor:pointer;"
                 onclick="$(\'#'.$modalID.'\').appendTo(\'body\');"
                 data-bs-toggle="modal"
                 data-bs-target="#'.$modalID.'">
-                <img src="images/fa-home.svg" /> '.$oNum.' - '.$oName.'
+                <i class="fa-solid fa-circle-question me-2"></i> '.$oNum.' - '.$oName.'
             </span>
         </div>
 
@@ -132,7 +132,7 @@ while ($row = mysqli_fetch_assoc($aResult)) {
         <div class="col text-end">
             <button class="btn btn-sm btn-success mx-1"
                 onclick="showConfirmation('.$oID.',\'familiar\'); return false;">
-                <img src="images/fa-check.svg" /> Познавам
+                <i class="fa-solid fa-house-circle-check me-2"></i> Познавам
             </button>
 
             <button class="btn btn-sm btn-info"

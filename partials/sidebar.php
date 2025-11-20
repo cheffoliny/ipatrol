@@ -14,7 +14,7 @@
 
     <hr class="border-light my-0">
     <!-- Статус на връзката -->
-    <ul id="unknOpened"  class="list-group m-0 p-0">Отворени</ul>
+    <ul id="unknOpened"  class="list-group m-0 p-0"></ul>
     <div id="connStatus" class="text-center my-0 py-0">
         <div class="text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Проверка...</div>
     </div>

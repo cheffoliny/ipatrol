@@ -26,7 +26,7 @@ $badgeClass  = $openedObjects > 0 ? "badge bg-danger rounded-pill" : "badge bg-p
 echo '
 <li
     class="list-group-item d-flex justify-content-between align-items-center p-2 mx-1 '.$openedClass.'"
-    onclick="showUnknown()"
+    onclick="showOpened()"
     style="cursor:pointer;">
     <i class="fa-solid fa-door-open"></i> ' . date('H:i:s') . '
     <span class="'.$badgeClass.'">'.$openedObjects.'</span>

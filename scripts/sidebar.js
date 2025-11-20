@@ -190,3 +190,28 @@ function showUnknown() {
         }
     });
 }
+
+
+function showOpened() {
+
+    $('.main-content').html(`
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br>Зареждане на данните...
+        </div>
+    `);
+
+    $.ajax({
+        url: 'content/opened.php',
+        method: 'GET',
+        success: function (html) {
+            $('.main-content').html(html);
+        },
+        error: function () {
+            $('.main-content').html(`
+                <div class="alert alert-danger m-3">
+                    ⚠️ Възникна грешка при зареждане на информацията.
+                </div>
+            `);
+        }
+    });
+}
