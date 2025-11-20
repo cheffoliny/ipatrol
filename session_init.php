@@ -1,6 +1,6 @@
 <?php
-// --- Сесия 12 часа ---
-$lifetime = 12 * 60 * 60;
+// --- Сесия 120 часа ---
+$lifetime = 120 * 60 * 60;
 
 session_set_cookie_params([
     'lifetime' => $lifetime,
