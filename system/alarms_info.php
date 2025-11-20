@@ -273,8 +273,8 @@ if ($fragmentOnly) {
     </div>
 </div>
 
-    <script>
-        (function() {
+<script>
+    (function() {
 
         // 🔹 Глобална функция за взимане на alarmID
         window.getAlarmIDFromDom = function() {
@@ -284,24 +284,27 @@ if ($fragmentOnly) {
 
         // 🔹 AUTO REFRESH (5 сек)
         async function refreshAlarmStatus() {
-        const alarmID = getAlarmIDFromDom();
-        if (!alarmID) return;
 
-        try {
-        const resp = await fetch("system/alarms_info.php?aID=" + alarmID + "&fragment=1");
-        const html = await resp.text();
+            if (window.allowAlarmAutoRefresh === false) return; // ❗ Ако глобалният флаг е изключен → НЕ презареждаме
 
-        const container = document.getElementById("alarm-status-container");
-        const openReasonModal = document.querySelector('.modal.show[id^="modalReason"]');
+            const alarmID = getAlarmIDFromDom();
+            if (!alarmID) return;
 
-        if (container && !openReasonModal) {
-        container.outerHTML = html;
-    }
+            try {
+                const resp = await fetch("system/alarms_info.php?aID=" + alarmID + "&fragment=1");
+                const html = await resp.text();
 
-    } catch (err) {
-        console.error("Грешка при авто-обновяване:", err);
-    }
-    }
+                const container = document.getElementById("alarm-status-container");
+                const openReasonModal = document.querySelector('.modal.show[id^="modalReason"]');
+
+                if (container && !openReasonModal) {
+                    container.outerHTML = html;
+                }
+
+            } catch (err) {
+                console.error("Грешка при авто-обновяване:", err);
+            }
+        }
 
         setInterval(refreshAlarmStatus, 5000);
 

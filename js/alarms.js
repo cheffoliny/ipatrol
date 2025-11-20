@@ -7,6 +7,7 @@ let alarmActive = false;
 let soundEnabled = true; // по подразбиране Вкл.
 let isAndroidWebView = false;
 let isDesktopBrowser = false;
+let allowAlarmAutoRefresh = true; // Глобален флаг – дали е позволено авто-обновяване на alarm-status-container
 
 // ============================================================================
 //                  PLATFORM DETECTION
@@ -100,7 +101,7 @@ function showAlarmIndicator() {
                 box-shadow: 0 0 20px red;
                 z-index: 9999;
                 animation: pulse 1s infinite;
-            ">🚨</div>
+            "><i class="fa-solid fa-car-on"></i></div>
         `;
         document.body.appendChild(el);
 
@@ -212,6 +213,8 @@ function updateAlarmsFromServer(response) {
 // --- Избор на аларма (зареждане в main-content) ---
 function selectAlarm(aID, oName) {
 
+    allowAlarmAutoRefresh = false; // ❗ Спираме авто-refresh за всички други аларми
+
     // Визуално маркираме избраната аларма
     $('#alarmPanel li').removeClass('active');
     $('#alarm-' + aID).addClass('active');
@@ -236,6 +239,7 @@ function selectAlarm(aID, oName) {
         data: { aID: aID },
         success: function (html) {
             $('.main-content').html(html);
+            allowAlarmAutoRefresh = true;
         },
         error: function () {
             $('.main-content').html(`

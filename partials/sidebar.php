@@ -6,11 +6,11 @@
     <hr class="border-light">
 
     <!-- Контрол за звук -->
-    <div class="text-center mb-3">
-        <button id="toggleSoundBtn" class="btn btn-sm btn-outline-light w-100">
-            <i class="fa-solid fa-volume-high me-1"></i> Звук: Вкл.
-        </button>
-    </div>
+<!--    <div class="text-center mb-3">-->
+<!--        <button id="toggleSoundBtn" class="btn btn-sm btn-outline-light w-100">-->
+<!--            <i class="fa-solid fa-volume-high me-1"></i> Звук: Вкл.-->
+<!--        </button>-->
+<!--    </div>-->
 
     <!-- Статус на връзката -->
     <div id="connStatus" class="text-center my-3">
