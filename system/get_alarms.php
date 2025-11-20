@@ -28,10 +28,10 @@ $aQuery = "
         DATE_FORMAT(swkm.end_time,      '%d.%m.%Y %H:%i:%s' ) AS oTime,
         DATE_FORMAT(swkm.reason_time,   '%d.%m.%Y %H:%i:%s' ) AS rTime,
 
-        ROUND(UNIX_TIMESTAMP(COALESCE(swkm.send_time	, 0)),0) AS sendUnix,        
-        ROUND(UNIX_TIMESTAMP(COALESCE(swkm.start_time	, 0)),0) AS startUnix,
-        ROUND(UNIX_TIMESTAMP(COALESCE(swkm.end_time	    , 0)),0) AS endUnix,        
-        ROUND(UNIX_TIMESTAMP(COALESCE(swkm.reason_time  , 0)),0) AS reasonUnix,
+        UNIX_TIMESTAMP(COALESCE(swkm.send_time  , 0)) AS sendUnix,        
+        UNIX_TIMESTAMP(COALESCE(swkm.start_time , 0)) AS startUnix,
+        UNIX_TIMESTAMP(COALESCE(swkm.end_time   , 0)) AS endUnix,        
+        UNIX_TIMESTAMP(COALESCE(swkm.reason_time, 0)) AS reasonUnix,
 
         swkm.start_time AS rawGTime
     FROM work_card_movement_test swkm
@@ -39,9 +39,9 @@ $aQuery = "
     WHERE
         UNIX_TIMESTAMP(swkm.send_time) > 0 AND
         (
-            UNIX_TIMESTAMP(COALESCE(swkm.start_time,	0)) = 0 OR
-            UNIX_TIMESTAMP(COALESCE(swkm.end_time, 	0)) = 0 OR
-            UNIX_TIMESTAMP(COALESCE(swkm.reason_time, 0)) = 0
+            UNIX_TIMESTAMP(COALESCE(swkm.start_time,    0)) = 0 OR
+            UNIX_TIMESTAMP(COALESCE(swkm.end_time,      0)) = 0 OR
+            UNIX_TIMESTAMP(COALESCE(swkm.reason_time,   0)) = 0
         )
     ORDER BY swkm.alarm_time DESC
 ";
@@ -75,22 +75,27 @@ if (!$num_aRows) {
         // Класовете остават за UI, но решението за play/stop идва от $stopPlay
         if ($stopPlay === 0) {
             $strClass = 'list-group-item bg-danger text-white alarm-new border border-2 border-opacity-0 mt-0 mb-1 mx-1';
+            $strBell = ' fa-shake ';
             $hasActiveAlarmSound = true;
         } else if( $startUnix == 0 ) {
             $strClass = 'list-group-item bg-danger text-white border border-light border-2 border-opacity-50 mt-0 mb-1 mx-1';
+            $strBell = '';
         } else if( $startUnix > 0 && $endUnix == 0 ) {
             $strClass = 'list-group-item bg-warning text-white border border-light border-2 border-opacity-50 mt-0 mb-1 mx-1';
+            $strBell = '';
         } else if( $endUnix > 0 && $reasonUnix == 0 ) {
             $strClass = 'list-group-item bg-success text-white border border-light border-2 border-opacity-5 mt-0 mb-1 mx-1';
+            $strBell = '';
         } else {
             $strClass = 'list-group-item bg-dark text-white mt-0 mb-1 mx-1';
+            $strBell = '';
         }
 
         echo "
         <li id='alarm-$aID' class='$strClass'
             onclick='selectAlarm($aID, \"{$oName}\")' style='cursor:pointer;'>
             <div class='fw-bold'>$oName</div>
-            <div class='mt-1'><i class='fa-solid fa-bell me-1'></i> $aTime</div>
+            <div class='mt-1'><i class='fa-solid fa-bell me-1 $strBell'></i> $aTime</div>
         </li>";
     }
 }
