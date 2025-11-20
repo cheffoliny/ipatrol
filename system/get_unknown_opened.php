@@ -44,7 +44,7 @@ echo '
     class="list-group-item d-flex justify-content-between align-items-center bg-info text-white p-2 mx-1"
     onclick="showUnknown()"
     style="cursor:pointer;">
-    <i class="fa-solid fa-question"></i> Непознати обекти
+    <i class="fa-solid fa-question"></i> Непознати
     <span class="'.$badgeUnknown.'">'.$unknownObjects.'</span>
 </li>';
 
