@@ -117,3 +117,76 @@ $(document).ready(function() {
     checkConnection();
     setInterval(checkConnection, 3000);
 });
+
+
+
+// --- Зареждане на отворени и непознати обекти ---
+function loadUnknownOpened() {
+
+    fetch('system/get_unknown_opened.php', { cache: 'no-store' })
+        .then(response => {
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            return response.json();
+        })
+        .then(data => {
+            const box = document.getElementById('unknOpened');
+
+            if (!box) return;
+
+            if (!data || !data.html) {
+                box.innerHTML = generateZeroFallback();
+            } else {
+                box.innerHTML = data.html;
+            }
+        })
+        .catch(err => {
+            console.error('Error loading unknown/opened:', err);
+            const box = document.getElementById('unknOpened');
+            if (box) box.innerHTML = generateZeroFallback();
+        });
+}
+
+// --- HTML fallback при грешка ---
+function generateZeroFallback() {
+    return `
+        <li class="list-group-item d-flex justify-content-between align-items-center p-2 mx-1 bg-dark text-white">
+            <i class="fa-solid fa-door-open"></i> 00:00:00
+            <span class="badge bg-primary rounded-pill">0</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center bg-info text-white p-2 mx-1">
+            <i class="fa-solid fa-question"></i> Непознати обекти
+            <span class="badge bg-info rounded-pill">0</span>
+        </li>`;
+}
+
+// --- Auto-load ---
+document.addEventListener('DOMContentLoaded', () => {
+    loadUnknownOpened();
+    setInterval(loadUnknownOpened, 60000);
+});
+
+
+
+function showUnknown() {
+
+    $('.main-content').html(`
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br>Зареждане на данните...
+        </div>
+    `);
+
+    $.ajax({
+        url: 'content/unknown.php',
+        method: 'GET',
+        success: function (html) {
+            $('.main-content').html(html);
+        },
+        error: function () {
+            $('.main-content').html(`
+                <div class="alert alert-danger m-3">
+                    ⚠️ Възникна грешка при зареждане на информацията.
+                </div>
+            `);
+        }
+    });
+}

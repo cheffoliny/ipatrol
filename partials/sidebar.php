@@ -3,7 +3,7 @@
         <!-- Панел с аларми -->
         <ul id="alarmPanel" class="list-group h-100 m-0 p-0"></ul>
     </div>
-    <hr class="border-light">
+
 
     <!-- Контрол за звук -->
 <!--    <div class="text-center mb-3">-->
@@ -12,7 +12,9 @@
 <!--        </button>-->
 <!--    </div>-->
 
+    <hr class="border-light my-0">
     <!-- Статус на връзката -->
+    <ul id="unknOpened"  class="list-group m-0 p-0">Отворени</ul>
     <div id="connStatus" class="text-center my-0 py-0">
         <div class="text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Проверка...</div>
     </div>

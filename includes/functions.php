@@ -95,9 +95,9 @@ function getUnknownObjects() {
 
     $aQuery  = "
                 SELECT
-                (COUNT(DISTINCT o.id) - SUM(IF(vo.id_person = ".$_SESSION['uid'].", 1, 0))) AS BR
+                (COUNT(DISTINCT o.id) - SUM(IF(vo.id_person = ".$_SESSION['user_id'].", 1, 0))) AS BR
                 FROM objects o
-                LEFT JOIN visited_objects vo ON vo.id_object = o.id AND vo.to_arc = 0 AND vo.id_person = ".$_SESSION['uid']."
+                LEFT JOIN visited_objects vo ON vo.id_object = o.id AND vo.to_arc = 0 AND vo.id_person = ".$_SESSION['user_id']."
                 WHERE o.id_office = 66 AND o.id_status <> 4 AND o.is_sod = 1 ";
     $aResult = mysqli_query( $db_sod, $aQuery ) or die( print "ВЪЗНИКНА ГРЕШКА ПРИ ОПИТ ЗА ЗАПИС! ОПИТАЙТЕ ПО–КЪСНО!".$aQuery );
 
