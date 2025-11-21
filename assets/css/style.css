@@ -37,3 +37,13 @@
     outline: 2px solid #fff;
     background-color: #0d6efd !important;
 }
+
+.fade-out {
+    opacity: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: hidden;
+    transition: all 0.35s ease;
+}

@@ -15,6 +15,20 @@ $citieID = isset($_GET['citieID']) ? (int) $_GET['citieID'] : 0;
 
 global $db_sod;
 
+    $oID	        = isset( $_GET['oID'  	] ) ? $_GET['oID'    ] : 0 ;
+    $oConfirmed     = isset( $_GET['confirm'] ) ? $_GET['confirm'] : '' ;
+    $tVisit         = isset( $_GET['type_visit'] ) ? $_GET['type_visit'] : '' ;
+
+    if( $oConfirmed == 'yes' ) {
+        add_new_familiar_object( $idUser, $oID, $tVisit );
+        echo '<div class="row px-4 mx-2 alert alert-success text-center" role="alert">
+                    <b> Обекта е добавен в опознати! </b>
+                </div>';
+
+    }
+
+
+
 // ========================================
 //   БАЗОВА SQL ЗАЯВКА
 // ========================================
@@ -59,7 +73,7 @@ if ($citieID > 0) {
     $aQuery .= " AND o.address_city = $citieID ";
 }
 
-$aQuery .= " ORDER BY distance_str ASC LIMIT 50";
+$aQuery .= " ORDER BY distance_str+0 ASC LIMIT 50";
 
 // ========================================
 //   ИЗПЪЛНЕНИЕ НА ЗАЯВКАТА
@@ -80,8 +94,7 @@ $numRows = mysqli_num_rows($aResult);
 echo '
 <div class="row border-bottom border-secondary-subtle text-white p-2">
     <div class="col">
-        <select id="cities" name="cities" class="form-select form-select-sm"
-                onchange="get_cities(); return false;">
+        <select id="cities" name="cities" class="form-select form-select-sm">
             <option value="0">-- Филтрирай по населено място --</option>';
             get_cities($citieID);
 echo '  </select>
@@ -114,8 +127,16 @@ while ($row = mysqli_fetch_assoc($aResult)) {
     $modalID = "myModal".$oID;
 
     // Основен ред
-    echo '
-    <div class="row border-bottom border-secondary-subtle text-white p-2 align-items-center">
+echo '
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 99999;">
+        <div id="toastMsg" class="toast text-bg-dark" role="alert">
+            <div class="d-flex">
+                <div class="toast-body"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+     <div class="row border-bottom border-secondary-subtle text-white p-2 align-items-center object-row-'.$oID.'">
 
         <div class="col-7">
             <span class="my-2"
@@ -130,8 +151,8 @@ while ($row = mysqli_fetch_assoc($aResult)) {
         <div class="col-1">'.$oDist.'</div>
 
         <div class="col text-end">
-            <button class="btn btn-sm btn-success mx-1"
-                onclick="showConfirmation('.$oID.',\'familiar\'); return false;">
+            <button class="btn btn-sm btn-success mx-1 btn-familiar"
+                    data-oid="'.$oID.'" data-type="familiar">
                 <i class="fa-solid fa-house-circle-check me-2"></i> Познавам
             </button>
 
