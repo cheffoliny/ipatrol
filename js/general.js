@@ -67,3 +67,85 @@ function confirmUnknown(oID, tVisit) {
 			showToast("⚠️ Грешка при заявката към сървъра!", "error");
 		});
 }
+
+
+// Ръчни аларми
+// === Зареждане на РЪЧНА АЛАРМА ===
+function loadHandAlarm() {
+    $("#main-content").html('<div class="text-center p-5 text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Зареждане...</div>');
+
+    $.ajax({
+        url: "content/hand_alarm.php",
+        method: "GET",
+        success: function (data) {
+            $("#main-content").html(data);
+        },
+        error: function () {
+            $("#main-content").html('<div class="alert alert-danger">Грешка при зареждане на ръчна аларма.</div>');
+        }
+    });
+}
+
+
+// === AJAX търсене на обекти за ръчна аларма ===
+function searchHandAlarm() {
+    let num = $("#num_name").val().trim();
+
+    $("#handAlarmResults").html(
+        '<div class="text-center p-3 text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Търсене...</div>'
+    );
+
+    $.ajax({
+        url: "content/hand_alarm_results.php",
+        method: "GET",
+        data: { num_name: num },
+        success: function (data) {
+            $("#handAlarmResults").html(data);
+        },
+        error: function () {
+            $("#handAlarmResults").html(
+                '<div class="alert alert-danger">Грешка при търсенето.</div>'
+            );
+        }
+    });
+}
+
+// --- Избор на аларма ---
+function addNewHandAlarm(oID, offID, cName, modalID, btnElement) {
+
+    let btn = $(btnElement); // самият бутон
+
+    $.ajax({
+        url: 'api/add_alarm.php',
+        method: 'POST',
+        data: { oID: oID, offID: offID, cName: cName },
+        dataType: 'json',
+
+        success: function (res) {
+
+            if (res.status === 'success') {
+
+                // ✅ 1. Затваряме модала
+                $("#" + modalID).modal("hide");
+
+                // ✅ 2. Деактивираме бутона
+                btn.prop("disabled", true);
+
+                // ✅ 3. Променяме визуално бутона
+                btn.removeClass("btn-danger").addClass("btn-secondary");
+                btn.html('<i class="fa-solid fa-circle-check me-2"></i> Добавено');
+
+                // ТОСТ (ти използваш твоя версия)
+                showToast("success", "Алармата е добавена успешно!");
+
+            } else {
+                showToast("danger", res.msg || "Грешка при добавянето");
+            }
+        },
+
+        error: function () {
+            console.error('Грешка при update на алармата');
+            showToast("danger", "Грешка в комуникацията със сървъра!");
+        }
+    });
+}

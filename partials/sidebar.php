@@ -13,6 +13,13 @@
 <!--    </div>-->
 
     <hr class="border-light my-0">
+    <ul class="list-group m-0 p-0">
+       <li class="list-group-item d-flex justify-content-between align-items-center bg-primary text-white p-2 mx-1" onclick="loadHandAlarm();">
+           <i class="fa-solid fa-circle-plus me-2"></i> Аларма
+           <span class="badge bg-primary rounded-pill"> </span>
+       </li>
+    </ul>
+
     <!-- Статус на връзката -->
     <ul id="unknOpened"  class="list-group m-0 p-0"></ul>
     <div id="connStatus" class="text-center my-0 py-0">
