@@ -79,10 +79,11 @@ if (empty($_SESSION['user_id'])) {
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="scripts/sidebar.js"></script>
-<!--    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJCSAQPKRrx7XlFccO_EkFqzZ74-EcA8o"></script>-->
+    <!--    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJCSAQPKRrx7XlFccO_EkFqzZ74-EcA8o"></script>-->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJCSAQPKRrx7XlFccO_EkFqzZ74-EcA8o&libraries=visualization"></script>
 
     <script src="js/alarms.js"></script>
+    <script src="js/general.js"></script>
     <script src="js/get_geo_data.js"></script>
 </div>
 </body>

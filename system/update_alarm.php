@@ -18,7 +18,7 @@ $aID = intval($_POST['aID']);
 $user = intval($_SESSION['user_id']);
 
 $query = "
-    UPDATE work_card_movement_test
+    UPDATE work_card_movement
     SET stop_play = 1, updated_time = NOW()
     WHERE id = $aID AND stop_play = 0
 ";

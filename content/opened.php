@@ -40,7 +40,7 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['user_id']) {
         $strModal = "myModal".$oID;
 
         echo '<div class="row border-bottom border-secondary-subtle text-white p-2">
-                <div class="col-7">
+                <div class="col-6">
                     <span class="my-2" onclick="$(\'#'.$strModal.'\').appendTo(\'body\');" data-bs-toggle="modal" data-bs-target="#'.$strModal.'">
                         <i class="fa-solid fa-house-circle-exclamation me-2"></i> '.$oNum.' - '. $oName .'
                     </span>

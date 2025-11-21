@@ -34,7 +34,7 @@ $aQuery = "
         UNIX_TIMESTAMP(COALESCE(swkm.reason_time, 0)) AS reasonUnix,
 
         swkm.start_time AS rawGTime
-    FROM work_card_movement_test swkm
+    FROM work_card_movement swkm
     LEFT JOIN objects o ON o.id = swkm.id_object
     WHERE
         UNIX_TIMESTAMP(swkm.send_time) > 0 AND

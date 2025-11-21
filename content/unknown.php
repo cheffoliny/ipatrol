@@ -137,7 +137,7 @@ while ($row = mysqli_fetch_assoc($aResult)) {
 
             <button class="btn btn-sm btn-info"
                 onclick="loadXMLDoc(\'action.php?action=unknown_details&oID='.$oID.'\', \'main\', \'unknown_details\'); return false;">
-                Опознай
+                <i class="fa-solid fa-route me-2"></i> Опознай
             </button>
         </div>
     </div>

@@ -57,7 +57,7 @@ $stmt = $db_sod->prepare("
         o.num AS oNum,
         o.geo_lat AS oLat, o.geo_lan AS oLan,
         o.address AS oAddr, o.place AS oPlace, o.operativ_info AS oInfo
-    FROM work_card_movement_test swkm
+    FROM work_card_movement swkm
     LEFT JOIN objects o ON o.id = swkm.id_object
     WHERE swkm.id = ?
 ");

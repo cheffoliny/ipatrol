@@ -39,7 +39,7 @@ global $db_sod, $db_system;
 						COALESCE(
                                 (
                                     SELECT wcm.id
-                                    FROM work_card_movement_test wcm
+                                    FROM work_card_movement wcm
                                     WHERE wcm.reason_time = '0000-00-00 00:00:00' AND wcm.id_object = o.id
                                     ORDER BY wcm.id DESC LIMIT 1
                                 ),
@@ -81,7 +81,7 @@ global $db_sod, $db_system;
             $send_time = date( 'Y-m-d H:i:s' );
         }
         if( $isAlarm == 0 ) {
-            $aQuery  = "INSERT INTO work_card_movement_test ( id_office, type, alarm_type, id_archiv_alarm, id_work_card, id_patrul, id_object, alarm_time, send_time, updated_time, obj_name, note )
+            $aQuery  = "INSERT INTO work_card_movement ( id_office, type, alarm_type, id_archiv_alarm, id_work_card, id_patrul, id_object, alarm_time, send_time, updated_time, obj_name, note )
                                 VALUES ( ".$offID.", 'object', '".$sID."', '".$arID."', 1, 1, ".$oID.", '".$mTime."', '".$send_time."', NOW(), '".$cName."', '".$maxID." ".$sID."' )";
             $aResult = mysqli_query( $db_sod, $aQuery ); // or die( print "ВЪЗНИКНА ГРЕШКА ПРИ ОПИТ ЗА ЗАПИС! ОПИТАЙТЕ ПО–КЪСНО!".$aQuery );
         }
@@ -104,7 +104,7 @@ global $db_sod, $db_system;
                       WHERE m.id_sig = 9 AND m.id_obj = wcm.id_object AND m.time_al >= wcm.alarm_time
                       AND ( (wcm.alarm_type = 1 AND m.flag = 1) OR ( wcm.alarm_type = 12 AND m.flag = 0 ) )
                     ) AS op
-                FROM work_card_movement_test wcm
+                FROM work_card_movement wcm
                 WHERE 1
                         AND wcm.alarm_type  IN(1,12)
                         AND wcm.send_time   = '0000-00-00 00:00:00'
@@ -122,10 +122,10 @@ global $db_sod, $db_system;
 
         $str_note = $diff." ".$alarm_to_open_time." ".$op." ".$wcmt;
         if( ( $diff > $alarm_to_open_time && $op == 0 ) || ( $diff > $alarm_to_open_time && $op > $alarm_to_open_time ) ) {
-            $sQuery	 = "UPDATE work_card_movement_test SET send_time = NOW(), note = '".$str_note." ".$maxID."' WHERE id = '".$wcmID."' ";
+            $sQuery	 = "UPDATE work_card_movement SET send_time = NOW(), note = '".$str_note." ".$maxID."' WHERE id = '".$wcmID."' ";
             $sResult	=	mysqli_query( $db_sod, $sQuery ) OR die( "".$sQuery );
         } else if( $diff > $alarm_to_open_time && ( $op > 0 && $op <= $alarm_to_open_time) ) {
-            $sQuery	 = "UPDATE work_card_movement_test SET reason_time = NOW(), id_alarm_reasons = 7, note = '".$str_note." ".$maxID."' WHERE id = '".$wcmID."' ";
+            $sQuery	 = "UPDATE work_card_movement SET reason_time = NOW(), id_alarm_reasons = 7, note = '".$str_note." ".$maxID."' WHERE id = '".$wcmID."' ";
             $sResult	=	mysqli_query( $db_sod, $sQuery ) OR die( "".$sQuery );
         }
     }
