@@ -113,6 +113,7 @@ $strBtnReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:
 $strMapModal = 'modalMap'.$oID;
 $strReasonModal = 'modalReason'.$oID;
 $strArchiveSection = 'archiveSection'.$sID;
+$alarmStatusContainer = 'alarm-status-container'.$oID;
 
 // ===========================
 // 🧱 Подготвяме HTML за статус-блока (този фрагмент ще връщаме при fragment=1)
@@ -120,7 +121,7 @@ $strArchiveSection = 'archiveSection'.$sID;
 ob_start();
 
 ?>
-<div id="alarm-status-container" class="row px-0 mx-0 mb-2" data-aid="<?= $aID ?>">
+<div id="<?= $alarmStatusContainer ?>" class="row px-0 mx-0 mb-2" data-aid="<?= $aID ?>">
     <div class="col p-2 my-1 mx-0 text-white alarm-button <?= $strClassStart ?>" style="cursor:pointer; height:96px" <?= $strBtnStart?> >
         <div class="d-flex justify-content-between">
             <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
@@ -163,28 +164,28 @@ if ($fragmentOnly) {
 
     <div class="card bg-dark text-white border-secondary">
         <div class="card-header d-flex justify-content-between align-items-center py-0">
-            <b><?= htmlspecialchars($oName) ?></b>
+            <i class="fa-solid fa-house me-2"></i> <b><?= htmlspecialchars($oName) ?></b>
             <div>
                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalObject">
-                    <i class="fa-solid fa-phone"></i>
+                    <i class="fa-solid fa-phone mx-2"></i>
                 </button>
 
                 <!-- 🗺️ Бутон за карта -->
                 <button class="btn btn-sm btn-success"
                         onclick="openMapModal('<?= $strMapModal ?>', <?= $oLat ?>, <?= $oLan ?>, <?= $idUser ?>)">
-                    <i class="fa-solid fa-car"></i>
+                    <i class="fa-solid fa-car mx-2"></i>
                 </button>
 
                 <button class="btn btn-sm btn-primary"
                         onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
-                    <i class="fa-solid fa-book"></i>
+                    <i class="fa-solid fa-book mx-2"></i>
                 </button>
 
             </div>
         </div>
 
         <div class="card-body p-2">
-            <p><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($oAddr) ?></p>
+            <p><i class="fa-solid fa-location-dot mx-2"></i> <?= htmlspecialchars($oAddr) ?></p>
             <p><?= htmlspecialchars($oPlace) ?></p>
             <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
         </div>
@@ -280,7 +281,7 @@ if ($fragmentOnly) {
 
         // 🔹 Глобална функция за взимане на alarmID
         window.getAlarmIDFromDom = function() {
-            const wrapper = document.getElementById("alarm-status-container");
+            const wrapper = document.getElementById("<?= $alarmStatusContainer ?>");
             return wrapper ? wrapper.getAttribute("data-aid") : null;
         };
 
@@ -296,7 +297,7 @@ if ($fragmentOnly) {
                 const resp = await fetch("system/alarms_info.php?aID=" + alarmID + "&fragment=1");
                 const html = await resp.text();
 
-                const container = document.getElementById("alarm-status-container");
+                const container = document.getElementById("<?= $alarmStatusContainer ?>");
                 const openReasonModal = document.querySelector('.modal.show[id^="modalReason"]');
 
                 if (container && !openReasonModal) {
@@ -362,7 +363,7 @@ if ($fragmentOnly) {
     });
 
         // обновяваме блока
-        const container = document.getElementById("alarm-status-container");
+        const container = document.getElementById("<?= $alarmStatusContainer ?>");
         if (container) container.outerHTML = html;
 
     } catch (err) {
@@ -393,7 +394,7 @@ if ($fragmentOnly) {
 
         const html = await resp.text();
 
-        const container = document.getElementById("alarm-status-container");
+        const container = document.getElementById("<?= $alarmStatusContainer ?>");
         if (container) container.outerHTML = html;
 
     } catch (err) {
