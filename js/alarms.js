@@ -18,10 +18,10 @@ function detectEnvironment() {
     // WebView detection + presence of Android JS interface
     if (/Android/i.test(ua) && (/(wv|Version\/)/i.test(ua) || typeof Android !== 'undefined')) {
         isAndroidWebView = true;
-        console.log('📱 Android WebView detected');
+      //  console.log('📱 Android WebView detected');
     } else {
         isDesktopBrowser = true;
-        console.log('💻 Desktop / Mobile Browser detected');
+      //  console.log('💻 Desktop / Mobile Browser detected');
     }
 }
 detectEnvironment();
@@ -65,7 +65,7 @@ function initBrowserSound() {
         alarmSound = new Audio('sounds/alarm.mp3');
         alarmSound.loop = true;
         alarmSound.volume = 0.9;
-        console.log('🔊 Browser audio initialized');
+     //   console.log('🔊 Browser audio initialized');
     } catch (err) {
         console.warn('⚠️ Неуспешна инициализация на Audio:', err);
     }
@@ -131,7 +131,7 @@ function hideAlarmIndicator() {
 // ============================================================================
 function triggerAlarmSound(soundFile = "alarm") {
     if (!soundEnabled) {
-        console.log('🔇 Sound disabled by user');
+     //   console.log('🔇 Sound disabled by user');
         return;
     }
 
@@ -186,13 +186,13 @@ function updateAlarmsFromServer(response) {
         if (!alarmActive) {
             triggerAlarmSound(response.soundFile || "alarm");
         } else {
-            console.log("🔔 Alarm already active");
+           // console.log("🔔 Alarm already active");
         }
     } else {
         if (alarmActive) {
             stopAlarmSound();
         } else {
-            console.log("🔕 No active alarms");
+           // console.log("🔕 No active alarms");
         }
     }
 }
@@ -268,7 +268,7 @@ $(document).ready(function () {
         } else if (soundEnabled) {
             // ако има активна аларма в UI — пускаме (но най-добре ползваме loadAlarms -> сървър флаг)
             // Няма да опитваме да пускаме звук от тук без актуална информация
-            console.log('🔊 Sound enabled by user');
+          //  console.log('🔊 Sound enabled by user');
         }
     });
 });

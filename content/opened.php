@@ -26,7 +26,7 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['user_id']) {
     $num_aRows	=	mysqli_num_rows( $aResult		);
 
     if( !$num_aRows ) {
-        echo '<div class="page-header"><h4>Няма отворени обекти след работно време!</h4></div>';
+        echo '<div class="alert alert-danger text-center">Няма отворени обекти след работно време!</div>';
     }
 
     while( $aRow = mysqli_fetch_assoc( $aResult ) ) {
