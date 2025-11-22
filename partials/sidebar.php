@@ -26,8 +26,33 @@
         <div class="text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Проверка...</div>
     </div>
     <div class="text-center py-0 my-0">
-        <a href="logout.php" class="btn btn-danger w-100">
-            <i class="fa-solid fa-right-from-bracket me-1"></i> Изход
-        </a>
+                <!-- Button trigger modal -->
+                <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#exitModal">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> ИЗХОД
+                </button>
+
     </div>
+
+
+
+        <!-- Modal -->
+        <div class="modal fade" id="exitModal" tabindex="-1" aria-labelledby="exitModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header bg-dark py-1">
+                <h1 class="modal-title fs-5" id="exitModalLabel">Потвърдете излизане!</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <!--<div class="modal-body bg-dark "></div>-->
+              <div class="modal-footer bg-dark ">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-ban me-1"></i> Откажи
+                </button>
+                <a href="logout.php" class="btn btn-danger">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> Потвърди
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
 </div>
