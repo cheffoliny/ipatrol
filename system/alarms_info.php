@@ -112,6 +112,7 @@ $strBtnReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:
 
 $strMapModal = 'modalMap'.$oID;
 $strReasonModal = 'modalReason'.$oID;
+$strArchiveSection = 'archiveSection'.$sID;
 
 // ===========================
 // 🧱 Подготвяме HTML за статус-блока (този фрагмент ще връщаме при fragment=1)
@@ -178,6 +179,7 @@ if ($fragmentOnly) {
                         onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
                     <i class="fa-solid fa-book"></i>
                 </button>
+
             </div>
         </div>
 
@@ -187,15 +189,15 @@ if ($fragmentOnly) {
             <div class="border-top border-secondary mt-2 pt-2 small"><?= $oInfo ?></div>
         </div>
 
-        <div id="archiveSection" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:none;">
-            <div class="d-flex justify-content-between align-items-center mb-1">
+        <div id="<?= $strArchiveSection ?>" class="border-top border-secondary bg-secondary bg-opacity-10 p-2 mt-2" style="display:block;">
+        <!--    <div class="d-flex justify-content-between align-items-center mb-1">
                 <small class="text-info">
                     <i class="fa-solid fa-circle fa-xs me-1 text-success" id="archiveStatusIcon"></i>
                     <span id="archiveStatusText">Зареждане...</span>
                 </small>
                 <button class="btn btn-sm btn-outline-light py-0 px-2" onclick="manualRefreshArchive()"><i class="far fa-reload"></i></button>
-            </div>
-            <div id="archiveContent" class="text-center text-muted py-3">
+            </div>-->
+            <div id="archiveContent" class="text-center text-muted py-0">
                 <i class="fa-solid fa-spinner fa-spin"></i> Зареждане...
             </div>
         </div>
@@ -421,4 +423,7 @@ if ($fragmentOnly) {
         if (this.value !== "0") selWith.value = "0";
     });
     }
+
+    toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>');
+
 </script>

@@ -281,9 +281,11 @@ let lastArchiveUpdate = null;
 let archiveParams = {};
 
 function toggleArchiveSection(oRec, sID, oNum, zTime) {
-    const section = document.getElementById('archiveSection');
+    const section = document.getElementById('archiveSection' + sID);
 
-    if (section.style.display === 'none') {
+    clearInterval(archiveInterval);
+
+    //if (section.style.display === 'none') {
         section.style.display = 'block';
         archiveParams = { oRec, sID, oNum, zTime };
         loadArchiveContent();
@@ -292,21 +294,21 @@ function toggleArchiveSection(oRec, sID, oNum, zTime) {
             loadArchiveContent();
         }, 10000);
 
-        setInterval(updateArchiveTimer, 1000);
-    } else {
-        section.style.display = 'none';
-        clearInterval(archiveInterval);
-    }
+        //setInterval(updateArchiveTimer, 10000);
+    //} else {
+      //  section.style.display = 'none';
+
+    //}
 }
 
 function loadArchiveContent() {
     const content = document.getElementById('archiveContent');
-    const statusText = document.getElementById('archiveStatusText');
-    const statusIcon = document.getElementById('archiveStatusIcon');
+    //const statusText = document.getElementById('archiveStatusText');
+   // const statusIcon = document.getElementById('archiveStatusIcon');
 
-    statusIcon.classList.remove('text-danger');
-    statusIcon.classList.add('text-warning');
-    statusText.textContent = 'Обновяване...';
+   // statusIcon.classList.remove('text-danger');
+   // statusIcon.classList.add('text-warning');
+   // statusText.textContent = 'Обновяване...';
 
     $.ajax({
         url: 'system/get_object_archiv.php',
@@ -324,36 +326,36 @@ function loadArchiveContent() {
                 ? response
                 : '<div class="text-center text-muted py-2">Няма архивни данни.</div>';
             lastArchiveUpdate = new Date();
-            statusIcon.classList.remove('text-warning', 'text-danger');
-            statusIcon.classList.add('text-success');
-            updateArchiveTimer();
+           // statusIcon.classList.remove('text-warning', 'text-danger');
+            //statusIcon.classList.add('text-success');
+         //   updateArchiveTimer();
         },
         error: function () {
             content.innerHTML = '<div class="text-center text-danger py-2">Грешка при зареждане на архива.</div>';
-            statusIcon.classList.remove('text-success', 'text-warning');
-            statusIcon.classList.add('text-danger');
-            statusText.textContent = 'Грешка при обновяване';
+          //  statusIcon.classList.remove('text-success', 'text-warning');
+          //  statusIcon.classList.add('text-danger');
+          //  statusText.textContent = 'Грешка при обновяване';
         }
     });
 }
 
-function updateArchiveTimer() {
-    const statusText = document.getElementById('archiveStatusText');
-    if (!lastArchiveUpdate) return;
+//function updateArchiveTimer() {
+//    const statusText = document.getElementById('archiveStatusText');
+//    if (!lastArchiveUpdate) return;
+//
+//    const diff = Math.floor((new Date() - lastArchiveUpdate) / 1000);
+//    const secs = diff % 60;
+//    const mins = Math.floor(diff / 60);
+//    const timeStr = mins > 0
+//        ? `Обновено преди ${mins}м ${secs}с`
+//        : `Обновено преди ${secs}с`;
+//
+//    statusText.textContent = `✓ ${timeStr}`;
+//}
 
-    const diff = Math.floor((new Date() - lastArchiveUpdate) / 1000);
-    const secs = diff % 60;
-    const mins = Math.floor(diff / 60);
-    const timeStr = mins > 0
-        ? `Обновено преди ${mins}м ${secs}с`
-        : `Обновено преди ${secs}с`;
-
-    statusText.textContent = `✓ ${timeStr}`;
-}
-
-function manualRefreshArchive() {
-    loadArchiveContent();
-}
+//function manualRefreshArchive() {
+//    loadArchiveContent();
+//}
 
 
 
