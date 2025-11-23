@@ -74,8 +74,9 @@ if (empty($_SESSION['user_id'])) {
     <?php include 'partials/sidebar.php'; ?>
 
     <div id="main-content" class="main-content bg-dark px-3 py-0">
-        <h2>Няма регистрирани аларми, <?= htmlspecialchars($_SESSION['first_name']); ?>!</h2>
-
+        <div class="alert alert-info text-center my-2">
+            <h6>Няма регистрирани аларми, <?= htmlspecialchars($_SESSION['first_name']); ?>!</h6>
+        </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

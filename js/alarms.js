@@ -211,9 +211,12 @@ function updateAlarmsFromServer(response) {
 // }
 
 // --- Избор на аларма (зареждане в main-content) ---
-function selectAlarm(aID, oName) {
+async function selectAlarm(aID, oName) {
 
-    allowAlarmAutoRefresh = false; // ❗ Спираме авто-refresh за всички други аларми
+    // Спираме каквото и да било предишно авто-рефреш поведение
+    stopAlarmAutoRefresh();
+
+    allowAlarmAutoRefresh = false; // ❗ Спираме авто-refresh за всички други аларми докато зареждаме
 
     // Визуално маркираме избраната аларма
     $('#alarmPanel li').removeClass('active');
@@ -238,8 +241,20 @@ function selectAlarm(aID, oName) {
         method: 'GET',
         data: { aID: aID },
         success: function (html) {
+
             $('.main-content').html(html);
-            allowAlarmAutoRefresh = true;
+
+            // След като сме заредили HTML-а → стартираме авто-рефреш (ако контейнерът присъства)
+            const statusContainerId = findAlarmStatusContainerId();
+            if (statusContainerId) {
+                const url = "system/alarms_info.php?aID=" + aID + "&fragment=1";
+                // разрешаваме авто-рефреш
+                allowAlarmAutoRefresh = true;
+                startAlarmAutoRefresh(statusContainerId, url, 5000);
+            } else {
+                allowAlarmAutoRefresh = false;
+            }
+
         },
         error: function () {
             $('.main-content').html(`
@@ -793,3 +808,141 @@ $(document).ready(function () {
 //        autoAlarmInterval = null;
 //    }
 //}
+
+// *** NEW AUTO UPDATE BLOCK AND ALARMS
+// ======= alarms.js: централен авто-рефреш контролер =======
+
+// Глобални променливи
+window._alarmRefresh = window._alarmRefresh || {
+    intervalId: null,
+    abortController: null,
+    currentContainerId: null,
+    currentURL: null,
+    intervalMs: 5000
+};
+
+// Спира напълно актуалния refresh (таймер + fetch)
+function stopAlarmAutoRefresh() {
+    // прекратяваме таймера
+    if (window._alarmRefresh.intervalId) {
+        clearInterval(window._alarmRefresh.intervalId);
+        window._alarmRefresh.intervalId = null;
+    }
+
+    // прекратяваме текущия fetch
+    if (window._alarmRefresh.abortController) {
+        try {
+            window._alarmRefresh.abortController.abort();
+        } catch (e) {
+            // ignore
+        }
+        window._alarmRefresh.abortController = null;
+    }
+
+    window._alarmRefresh.currentContainerId = null;
+    window._alarmRefresh.currentURL = null;
+    // optional flag
+    window.allowAlarmAutoRefresh = false;
+    // debug
+    // console.log("stopAlarmAutoRefresh() called");
+}
+
+// Изпълнява една fetch заявка и обновява container (винаги използвай това)
+async function refreshOnce(containerId, url) {
+
+    // Нищо, ако глобалният флаг е изключен
+    if (window.allowAlarmAutoRefresh === false) return;
+
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Ако контейнерът има data-break-refresh="1" → спираме окончателно
+    if (container.dataset && container.dataset.breakRefresh === "1") {
+        // спираме цикъла
+        stopAlarmAutoRefresh();
+        return;
+    }
+
+    // Ако вече имаме активен controller — abort-ваме го (за да избегнем overlap)
+    if (window._alarmRefresh.abortController) {
+        try { window._alarmRefresh.abortController.abort(); } catch(e){}
+    }
+
+    const controller = new AbortController();
+    window._alarmRefresh.abortController = controller;
+
+    try {
+        const resp = await fetch(url, { signal: controller.signal });
+        // ако заявката е отменена, fetch ще reject-не с AbortError
+        const html = await resp.text();
+
+        // Отново: проверка дали контейнера все още съществува (и не е сменен)
+        const curContainer = document.getElementById(containerId);
+        if (!curContainer) return;
+
+        // Ако няма отворен modalReason — можем да презапишем
+        const openReasonModal = document.querySelector('.modal.show[id^="modalReason"]');
+        if (!openReasonModal) {
+            // заместваме HTML на контейнера (outerHTML е предпочитано в твоят код)
+            curContainer.outerHTML = html;
+        }
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            // заявката е била abort-ната — това е нормално при смяна на аларма
+            // console.log("refreshOnce aborted");
+            return;
+        }
+        console.error("Грешка при refreshOnce:", err);
+    } finally {
+        // чистене на controller, ако той е още текущ
+        if (window._alarmRefresh.abortController === controller) {
+            window._alarmRefresh.abortController = null;
+        }
+    }
+}
+
+// Стартира цикличен авто-рефреш за даден контейнер
+// containerId - id на status-контейнера (например alarm-status-container123)
+// url - url за fragment (пример: "system/alarms_info.php?aID=123&fragment=1")
+// intervalMs - период (ms)
+function startAlarmAutoRefresh(containerId, url, intervalMs = 5000) {
+
+    // Ако искаме да спрем всичко преди нов старт
+    stopAlarmAutoRefresh();
+
+    window.allowAlarmAutoRefresh = true;
+    window._alarmRefresh.currentContainerId = containerId;
+    window._alarmRefresh.currentURL = url;
+    window._alarmRefresh.intervalMs = intervalMs;
+
+    // Веднага правим първи refresh
+    refreshOnce(containerId, url);
+
+    // После стартираме периодичен
+    window._alarmRefresh.intervalId = setInterval(function() {
+        refreshOnce(containerId, url);
+    }, intervalMs);
+
+    // debug
+    // console.log("startAlarmAutoRefresh() for", containerId, url);
+}
+
+// Утилита: намира първия елемент, ID на който започва с "alarm-status-container"
+function findAlarmStatusContainerId() {
+    const el = document.querySelector('[id^="alarm-status-container"]');
+    return el ? el.id : null;
+}
+
+
+// ========== Интеграция със selectAlarm (примерни промени) ==========
+// В твоя selectAlarm(aID, oName) добави (в началото) спиране на старата активност:
+//    stopAlarmAutoRefresh();
+// и в success callback на ajax (след $('.main-content').html(html);) добави старт:
+//    const statusContainerId = findAlarmStatusContainerId();
+//    if (statusContainerId) {
+//        const url = "system/alarms_info.php?aID=" + aID + "&fragment=1";
+//        startAlarmAutoRefresh(statusContainerId, url, 5000);
+//    }
+
+// Ако selectAlarm използва jQuery $.ajax success -> показано долу.
+

@@ -320,9 +320,9 @@ function render_alarm_reasons($isPatrul)
 
     while ($row = mysqli_fetch_assoc($result)) {
         $id   = htmlspecialchars($row['id']);
-        $name = htmlspecialchars($row['name']);
+        $name = htmlspecialchars($row['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-        echo "<option value=\"{$id}\">{$name}</option>";
+        echo "<option value='{$row['id']}'>{$name}</option>";
     }
 }
 ?>

@@ -52,9 +52,9 @@ $num_aRows = mysqli_num_rows($aResult);
 $hasActiveAlarmSound = false; // true ако има поне една със stop_play = 0
 
 if (!$num_aRows) {
-    echo '<li class="list-group-item bg-secondary text-white py-4 px-3 text-center">
+    echo '<a id="alarm-0" class="list-group-item bg-secondary text-white py-4 px-3 text-center" href="dashboard.php">
             <i class="fa-regular fa-bell"></i> Няма активни аларми
-          </li>';
+          </a>';
 } else {
     while ($aRow = mysqli_fetch_assoc($aResult)) {
         $aID   = $aRow['aID'];

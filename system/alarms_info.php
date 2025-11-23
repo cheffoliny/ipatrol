@@ -11,8 +11,9 @@ if (empty($_SESSION['user_id'])) {
 
 $aID = intval($_GET['aID'] ?? 0);
 $alarm_status = $_GET['alarm_status'] ?? '';
-$alarm_reason = intval($_GET['reasonWithReaction'] ?? 0);
-$alarm_reason2 = intval($_GET['reasonNoReaction'] ?? 0);
+//$alarm_reason = intval($_GET['reasonWithReaction'] ?? 0);
+//$alarm_reason2 = intval($_GET['reasonNoReaction'] ?? 0);
+$alarm_reason = intval($_GET['alarm_reason'] ?? 0);
 $idUser = intval($_SESSION['user_id'] ?? 0);
 $fragmentOnly = isset($_GET['fragment']) && $_GET['fragment'] == '1';
 
@@ -26,7 +27,7 @@ if ($aID === 0) {
 
 // Когато подаваме статус — правим update, след това връщаме обновения фрагмент
 if ($alarm_status !== '') {
-    if ($alarm_reason === 0) $alarm_reason = $alarm_reason2;
+ //   if ($alarm_reason === 0) $alarm_reason = $alarm_reason2;
     // повикаме функцията (тя вече използва глобалния $db_sod)
     update_alarm_status($aID, $alarm_status, $idUser, $alarm_reason);
 }
@@ -53,12 +54,14 @@ $stmt = $db_sod->prepare("
         swkm.id AS aID,
         swkm.obj_name AS oName,
         swkm.id_archiv_alarm AS sID,
+        swkm.id_alarm_reasons AS arID,
         o.id AS oID, o.id_receivers AS oRec,
         o.num AS oNum,
         o.geo_lat AS oLat, o.geo_lan AS oLan,
         o.address AS oAddr, o.place AS oPlace, o.operativ_info AS oInfo
     FROM work_card_movement swkm
     LEFT JOIN objects o ON o.id = swkm.id_object
+    LEFT JOIN alarm_reasons ar ON ar.id = swkm.id_alarm_reasons
     WHERE swkm.id = ?
 ");
 $stmt->bind_param('i', $aID);
@@ -110,6 +113,7 @@ $strBtnReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:
 
 //$strSelectReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? '' : 'disabled="disabled"';
 
+$arID = $aRow['arID'];
 $strMapModal = 'modalMap'.$oID;
 $strReasonModal = 'modalReason'.$oID;
 $strArchiveSection = 'archiveSection'.$sID;
@@ -121,7 +125,7 @@ $alarmStatusContainer = 'alarm-status-container'.$oID;
 ob_start();
 
 ?>
-<div id="<?= $alarmStatusContainer ?>" class="row px-0 mx-0 mb-2" data-aid="<?= $aID ?>">
+<div id="<?= $alarmStatusContainer ?>" class="row px-0 mx-0 mb-2" data-aid="<?= $aID ?>" data-break-refresh="<?= ($arID > 0 ? '1' : '0') ?>">
     <div class="col p-2 my-1 mx-0 text-white alarm-button <?= $strClassStart ?>" style="cursor:pointer; height:96px" <?= $strBtnStart?> >
         <div class="d-flex justify-content-between">
             <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
@@ -278,6 +282,24 @@ if ($fragmentOnly) {
 
 <script>
     (function() {
+        // ⚠️ ВНИМАНИЕ: НЕ пускаме самостоятелен setInterval тук вече.
+        // Този файл оставя помощни функции, но реалният авто-рефреш се управлява от js/alarms.js
+
+        // 🔹 Глобална функция за взимане на alarmID — запазваме за съвместимост
+        window.getAlarmIDFromDom = function() {
+            const wrapper = document.getElementById("<?= $alarmStatusContainer ?>");
+            return wrapper ? wrapper.getAttribute("data-aid") : null;
+        };
+
+        // 🔹 Утилита: връща ID на status-контейнера (може да се използва от js/alarms.js)
+        window.getAlarmStatusContainerId = function() {
+            return "<?= $alarmStatusContainer ?>";
+        };
+
+        // НОТA: Не стартираме интервал тук. Интервалът и AbortController се управляват в js/alarms.js.
+    })();
+
+    (function() {
 
         // 🔹 Глобална функция за взимане на alarmID
         window.getAlarmIDFromDom = function() {
@@ -286,30 +308,32 @@ if ($fragmentOnly) {
         };
 
         // 🔹 AUTO REFRESH (5 сек)
-        async function refreshAlarmStatus() {
-
-            if (window.allowAlarmAutoRefresh === false) return; // ❗ Ако глобалният флаг е изключен → НЕ презареждаме
-
-            const alarmID = getAlarmIDFromDom();
-            if (!alarmID) return;
-
-            try {
-                const resp = await fetch("system/alarms_info.php?aID=" + alarmID + "&fragment=1");
-                const html = await resp.text();
-
-                const container = document.getElementById("<?= $alarmStatusContainer ?>");
-                const openReasonModal = document.querySelector('.modal.show[id^="modalReason"]');
-
-                if (container && !openReasonModal) {
-                    container.outerHTML = html;
-                }
-
-            } catch (err) {
-                console.error("Грешка при авто-обновяване:", err);
-            }
-        }
-
-        setInterval(refreshAlarmStatus, 5000);
+//         async function refreshAlarmStatus() {
+//
+//             if (window.allowAlarmAutoRefresh === false) return; // ❗ Ако глобалният флаг е изключен → НЕ презареждаме
+//
+//             const alarmID = getAlarmIDFromDom();
+//             if (!alarmID) return;
+//
+//             try {
+//                 const resp = await fetch("system/alarms_info.php?aID=" + alarmID + "&fragment=1");
+//                 const html = await resp.text();
+//
+//                 const container = document.getElementById("<?= $alarmStatusContainer ?>");
+//                 const openReasonModal = document.querySelector('.modal.show[id^="modalReason"]');
+//
+//                 if (container && !openReasonModal) {
+//                     container.outerHTML = html;
+//                 }
+//
+//             } catch (err) {
+//                 console.error("Грешка при авто-обновяване:", err);
+//             }
+//         }
+//
+//
+//
+//         setInterval(refreshAlarmStatus, 5000);
 
 
         // ============================================================
@@ -347,30 +371,30 @@ if ($fragmentOnly) {
         btn.style.opacity = "0.6";
 
         try {
-        const url = "system/alarms_info.php?aID=" + aID +
-        "&alarm_status=reason_time" +
-        "&alarm_reason=" + alarm_reason +
-        "&fragment=1";
+            const url = "system/alarms_info.php?aID=" + aID +
+            "&alarm_status=reason_time" +
+            "&alarm_reason=" + alarm_reason +
+            "&fragment=1";
 
-        const resp = await fetch(url);
-        const html = await resp.text();
+            const resp = await fetch(url);
+            const html = await resp.text();
 
-        // затваряме modalReason*
-        document.querySelectorAll('[id^="modalReason"]').forEach(mEl => {
-        const modal = bootstrap.Modal.getInstance(mEl) ||
-        bootstrap.Modal.getOrCreateInstance(mEl);
-        modal.hide();
-    });
+            // затваряме modalReason*
+            document.querySelectorAll('[id^="modalReason"]').forEach(mEl => {
+                const modal = bootstrap.Modal.getInstance(mEl) ||
+                bootstrap.Modal.getOrCreateInstance(mEl);
+                modal.hide();
+            });
 
-        // обновяваме блока
-        const container = document.getElementById("<?= $alarmStatusContainer ?>");
-        if (container) container.outerHTML = html;
+            // обновяваме блока
+            const container = document.getElementById("<?= $alarmStatusContainer ?>");
+            if (container) container.outerHTML = html;
 
-    } catch (err) {
-        console.error("Грешка при reason_time:", err);
-    } finally {
-        btn.style.opacity = "1";
-    }
+        } catch (err) {
+            console.error("Грешка при reason_time:", err);
+        } finally {
+            btn.style.opacity = "1";
+        }
 
         return; // ❗ спираме, защото това е специален режим
     }
@@ -380,28 +404,28 @@ if ($fragmentOnly) {
         // 🔹 Стандартни статуси (start_time, end_time, etc.)
         // ============================================================
         if (status === 'reason_time_confirm' && btn.getAttribute('data-bs-toggle') === 'modal') {
-        return; // остава да отвори модала
-    }
+            return; // остава да отвори модала
+        }
 
         btn.style.opacity = "0.6";
 
         try {
-        const resp = await fetch(
-        "system/alarms_info.php?aID=" + aID +
-        "&alarm_status=" + encodeURIComponent(status) +
-        "&fragment=1"
-        );
+            const resp = await fetch(
+            "system/alarms_info.php?aID=" + aID +
+            "&alarm_status=" + encodeURIComponent(status) +
+            "&fragment=1"
+            );
 
-        const html = await resp.text();
+            const html = await resp.text();
 
-        const container = document.getElementById("<?= $alarmStatusContainer ?>");
-        if (container) container.outerHTML = html;
+            const container = document.getElementById("<?= $alarmStatusContainer ?>");
+            if (container) container.outerHTML = html;
 
-    } catch (err) {
-        console.error("Грешка при запис на статус:", err);
-    } finally {
-        setTimeout(() => btn.style.opacity = "1", 200);
-    }
+        } catch (err) {
+            console.error("Грешка при запис на статус:", err);
+        } finally {
+            setTimeout(() => btn.style.opacity = "1", 200);
+        }
 
     }); // end click listener
 
@@ -411,18 +435,18 @@ if ($fragmentOnly) {
 
 
         // 🔹 Select-синхронизация (запазваме твоята функция)
-        function reset_select_reasons() {
+    function reset_select_reasons() {
 
         const selWith = document.getElementById("reasonWithReaction");
         const selNo   = document.getElementById("reasonNoReaction");
 
         selWith.addEventListener("change", function () {
-        if (this.value !== "0") selNo.value = "0";
-    });
+            if (this.value !== "0") selNo.value = "0";
+        });
 
         selNo.addEventListener("change", function () {
-        if (this.value !== "0") selWith.value = "0";
-    });
+            if (this.value !== "0") selWith.value = "0";
+        });
     }
 
     toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>');
