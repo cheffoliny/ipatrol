@@ -81,7 +81,7 @@ if (!$num_aRows) {
             $strClass = 'list-group-item bg-danger text-white border border-light border-2 border-opacity-50 mt-0 mb-1 mx-1';
             $strBell = '';
         } else if( $startUnix > 0 && $endUnix == 0 ) {
-            $strClass = 'list-group-item bg-warning text-white border border-light border-2 border-opacity-50 mt-0 mb-1 mx-1';
+            $strClass = 'list-group-item bg-warning text-bg-warning border border-light border-2 border-opacity-50 mt-0 mb-1 mx-1';
             $strBell = '';
         } else if( $endUnix > 0 && $reasonUnix == 0 ) {
             $strClass = 'list-group-item bg-success text-white border border-light border-2 border-opacity-5 mt-0 mb-1 mx-1';

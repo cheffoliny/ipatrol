@@ -182,7 +182,7 @@ function get_object_archiv($oRec, $sID, $oNum, $zTime, $ListSize, $ListLimit)
         // 🎨 Динамични класове
         $bgClass = ($mID == $sID)
             ? 'bg-danger bg-opacity-75 fw-bold'
-            : ($isAlarm ? 'bg-warning bg-opacity-75' : 'bg-dark');
+            : ($isAlarm ? 'bg-warning text-bg-warning bg-opacity-75' : 'bg-dark');
 
         $html .= '
             <div class="row p-0 pb-1 m-0 border-bottom border-secondary small ' . $bgClass . '">

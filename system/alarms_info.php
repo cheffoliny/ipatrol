@@ -55,6 +55,7 @@ $stmt = $db_sod->prepare("
         swkm.obj_name AS oName,
         swkm.id_archiv_alarm AS sID,
         swkm.id_alarm_reasons AS arID,
+        ar.`name` AS arName,
         o.id AS oID, o.id_receivers AS oRec,
         o.num AS oNum,
         o.geo_lat AS oLat, o.geo_lan AS oLan,
@@ -105,7 +106,7 @@ function diffBadge($timeDiff)
 $strClassStart = ($gTime == '00.00.0000 00:00:00') ? 'bg-danger' : 'bg-secondary';
 $strBtnStart = ($gTime == '00.00.0000 00:00:00') ? 'id="start_time" data-status="start_time" data-aid="'.$aID.'"' : '';
 
-$strClassEnd = ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-dark' : 'bg-secondary';
+$strClassEnd = ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'bg-warning text-bg-warning' : 'bg-secondary text-white';
 $strBtnEnd = ($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') ? 'id="end_time" data-status="end_time" data-aid="'.$aID.'"' : '';
 
 $strClassReason = ($oTime != '00.00.0000 00:00:00' && $rTime == '00.00.0000 00:00:00') ? 'bg-success text-dark' : 'bg-secondary';
@@ -134,7 +135,7 @@ ob_start();
         <small>[<?= substr($gTime, 10, 10) ?>]</small>
     </div>
 
-    <div class="col p-2 my-1 mx-1 text-white alarm-button <?= $strClassEnd ?>" style="cursor:pointer; height:96px" <?= $strBtnEnd; ?> >
+    <div class="col p-2 my-1 mx-1 alarm-button <?= $strClassEnd ?>" style="cursor:pointer; height:96px" <?= $strBtnEnd; ?> >
         <div class="d-flex justify-content-between">
             <h6>НА ОБЕКТА</h6><?= diffBadge($timeToObject) ?>
         </div>
@@ -144,7 +145,15 @@ ob_start();
 
     <div class="col p-2 my-1 mx-0 text-white <?= $strClassReason ?>" <?= $strBtnReason ?> style="cursor:pointer; height:96px">
         <div class="d-flex justify-content-between">
-            <h6>ПРИКЛЮЧИ</h6><?= diffBadge($timeToEnd) ?>
+            <h6>
+                <?php
+                    if($arID > 0) {
+                        echo $arName;
+                    } else {
+                        echo 'ПРИКЛЮЧИ';
+                    }
+                ?>
+            </h6><?= diffBadge($timeToEnd) ?>
         </div>
         <small><?= htmlspecialchars($prName) ?></small><br>
         <small>[<?= substr($rTime, 10, 10) ?>]</small>
