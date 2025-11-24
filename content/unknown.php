@@ -37,6 +37,7 @@ $aQuery  = "
         o.id AS oID,
         o.num AS oNum,
         o.name AS oName,
+        o.geo_lat AS oLat, o.geo_lan AS oLan,
         CONCAT(
             ROUND((
                 distanceByGeo(
@@ -121,10 +122,13 @@ if ($numRows == 0) {
 while ($row = mysqli_fetch_assoc($aResult)) {
 
     $oID   = (int) $row['oID'];
+    $oLan  = $row['oLan'];
+    $oLat  = $row['oLat'];
     $oNum  = htmlspecialchars($row['oNum']);
     $oName = htmlspecialchars($row['oName']);
     $oDist = htmlspecialchars($row['distance_str']);
     $modalID = "myModal".$oID;
+    $strMapModal = 'modalMap'.$oID;
     $confirmFamiliarModal = "confirmFamiliarModal".$oID;
 
     // Основен ред
@@ -157,10 +161,12 @@ echo '
                 <i class="fa-solid fa-house-circle-check me-2"></i> Познавам
             </button>
 
-            <button class="btn btn-sm btn-info"
-                onclick="loadXMLDoc(\'action.php?action=unknown_details&oID='.$oID.'\', \'main\', \'unknown_details\'); return false;">
-                <i class="fa-solid fa-route me-2"></i> Опознай
+            <!-- 🗺️ Бутон за карта -->
+            <button class="btn btn-sm btn-success"
+                    onclick="openMapModal(\''.$strMapModal.'\', \''.$oLat.'\', \''.$oLan.'\', '.$idUser.')">
+                <i class="fa-solid fa-car mx-2"></i>
             </button>
+
         </div>
     </div>
     ';
@@ -183,7 +189,8 @@ echo '
                 </div>
             </div>
         </div>
-    </div>
+    </div>';
+?>
 
     <div class="modal fade" id="confirmFamiliarModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
@@ -207,7 +214,27 @@ echo '
       </div>
     </div>
 
-    ';
+
+    <!-- 🗺️ Модал за карта -->
+    <div class="modal fade" id="<?= $strMapModal ?>" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content bg-dark text-white">
+                <!--   <div class="modal-header border-secondary">
+                       <h6 class="modal-title"><i class="fa-solid fa-map-location-dot"></i> Локация на обект и екип</h6>
+                       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                   </div>-->
+                <div class="modal-body p-0">
+                    <div id="mapContainer_<?= $oID ?>" style="width:100%;height:500px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" id="confirmFamiliarYes">Познавам</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<?php
+
 }
 
 ?>
