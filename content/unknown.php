@@ -125,6 +125,7 @@ while ($row = mysqli_fetch_assoc($aResult)) {
     $oName = htmlspecialchars($row['oName']);
     $oDist = htmlspecialchars($row['distance_str']);
     $modalID = "myModal".$oID;
+    $confirmFamiliarModal = "confirmFamiliarModal".$oID;
 
     // Основен ред
 echo '
@@ -183,6 +184,29 @@ echo '
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="confirmFamiliarModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title">Потвърждение</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            Сигурни ли сте, че познавате този обект?
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отказ</button>
+            <button type="button" class="btn btn-success" id="confirmFamiliarYes">Потвърждавам</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
     ';
 }
 

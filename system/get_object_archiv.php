@@ -12,7 +12,7 @@ $listSize = intval($_GET['listSize'] ?? 720);
 $listLimit = intval($_GET['listLimit'] ?? 20);
 
 if (!$oRec || !$oNum || !$zTime) {
-    exit('<div class="alert alert-warning m-1 p-1">Невалидни параметри.</div>');
+    exit('<div class="alert alert-warning text-bg-warning text-bg-warning  m-1 p-1">Невалидни параметри.</div>');
 }
 
 get_object_archiv($oRec, $sID, $oNum, $zTime, $listSize, $listLimit);

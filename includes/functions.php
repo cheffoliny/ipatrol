@@ -181,13 +181,13 @@ function get_object_archiv($oRec, $sID, $oNum, $zTime, $ListSize, $ListLimit)
 
         // 🎨 Динамични класове
         $bgClass = ($mID == $sID)
-            ? 'bg-danger bg-opacity-75 fw-bold'
+            ? 'bg-danger text-white bg-opacity-75 fw-bold'
             : ($isAlarm ? 'bg-warning text-bg-warning bg-opacity-75' : 'bg-dark');
 
         $html .= '
             <div class="row p-0 pb-1 m-0 border-bottom border-secondary small ' . $bgClass . '">
-                <div class="col-3 text-center text-white p-1">' . $mTime . '</div>
-                <div class="col text-start text-white p-1">' . $msg . '</div>
+                <div class="col-3 text-center p-1">' . $mTime . '</div>
+                <div class="col text-start p-1">' . $msg . '</div>
             </div>';
     }
 

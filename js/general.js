@@ -27,45 +27,104 @@ $(document).on('change', '#cities', function () {
 	$("#main-content").load('content/unknown.php?citieID=' + citieID);
 });
 
+////
+//$(document).on('click', '.btn-familiar', function () {
+//	let oID = $(this).data('oid');
+//	let tVisit = $(this).data('type');
 //
+//	showConfirmation(oID, tVisit);
+//});
+//
+//function showConfirmation(oID, tVisit) {
+//	if (confirm("Сигурни ли сте, че познавате този обект?")) {
+//		confirmUnknown(oID, tVisit);
+//	}
+//}
+//function confirmUnknown(oID, tVisit) {
+//
+//	$.post('api/unknown_confirm.php', {
+//		oID: oID,
+//		type_visit: tVisit
+//	})
+//		.done(function (res) {
+//
+//			if (res.status === "success") {
+//
+//				let row = $(".object-row-" + oID);
+//
+//				row.addClass("fade-out");
+//
+//				setTimeout(() => row.remove(), 400);
+//
+//				showToast("Обектът е успешно добавен в опознати!");
+//
+//			} else {
+//				showToast("⚠️ Грешка: " + res.message, "error");
+//			}
+//
+//		})
+//		.fail(function () {
+//			showToast("⚠️ Грешка при заявката към сървъра!", "error");
+//		});
+//}
+// При натискане на бутона
+// Натискане на бутон "Познавам"
 $(document).on('click', '.btn-familiar', function () {
-	let oID = $(this).data('oid');
-	let tVisit = $(this).data('type');
+    let oID = $(this).data('oid');
+    let tVisit = $(this).data('type');
 
-	showConfirmation(oID, tVisit);
+    // Запазваме данните в модала
+    $('#confirmFamiliarModal').data('oid', oID);
+    $('#confirmFamiliarModal').data('type', tVisit);
+
+    // Показваме модала
+    let modal = new bootstrap.Modal(document.getElementById('confirmFamiliarModal'));
+    modal.show();
 });
 
-function showConfirmation(oID, tVisit) {
-	if (confirm("Сигурни ли сте, че познавате този обект?")) {
-		confirmUnknown(oID, tVisit);
-	}
-}
+// Натискане на "Потвърждавам" в модала (dynamic safe)
+$(document).on('click', '#confirmFamiliarYes', function () {
+    let modal = bootstrap.Modal.getInstance(document.getElementById('confirmFamiliarModal'));
+
+    // Взимаме данните от модала
+    let oID = $('#confirmFamiliarModal').data('oid');
+    let tVisit = $('#confirmFamiliarModal').data('type');
+
+    // Скриваме модала
+    modal.hide();
+
+    // Извикваме същата функция за потвърждение
+    confirmUnknown(oID, tVisit);
+});
+
+
+// Функцията за потвърждение на обекта
 function confirmUnknown(oID, tVisit) {
 
-	$.post('api/unknown_confirm.php', {
-		oID: oID,
-		type_visit: tVisit
-	})
-		.done(function (res) {
+    $.post('api/unknown_confirm.php', {
+        oID: oID,
+        type_visit: tVisit
+    })
+    .done(function (res) {
 
-			if (res.status === "success") {
+        if (res.status === "success") {
 
-				let row = $(".object-row-" + oID);
+            let row = $(".object-row-" + oID);
 
-				row.addClass("fade-out");
+            row.addClass("fade-out");
 
-				setTimeout(() => row.remove(), 400);
+            setTimeout(() => row.remove(), 400);
 
-				showToast("Обектът е успешно добавен в опознати!");
+            showToast("Обектът е успешно добавен в опознати!");
 
-			} else {
-				showToast("⚠️ Грешка: " + res.message, "error");
-			}
+        } else {
+            showToast("⚠️ Грешка: " + res.message, "error");
+        }
 
-		})
-		.fail(function () {
-			showToast("⚠️ Грешка при заявката към сървъра!", "error");
-		});
+    })
+    .fail(function () {
+        showToast("⚠️ Грешка при заявката към сървъра!", "error");
+    });
 }
 
 

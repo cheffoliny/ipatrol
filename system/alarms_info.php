@@ -129,18 +129,17 @@ ob_start();
 <div id="<?= $alarmStatusContainer ?>" class="row px-0 mx-0 mb-2" data-aid="<?= $aID ?>" data-break-refresh="<?= ($arID > 0 ? '1' : '0') ?>">
     <div class="col p-2 my-1 mx-0 text-white alarm-button <?= $strClassStart ?>" style="cursor:pointer; height:96px" <?= $strBtnStart?> >
         <div class="d-flex justify-content-between">
-            <h6>ПРИЕМАМ</h6><?= diffBadge($timeToStart) ?>
+            <h6>ПРИЕМАМ</h6>
+
+        <small>[<?= substr($gTime, 10, 10) ?>] - <?= htmlspecialchars($psName) ?></small><?= diffBadge($timeToStart) ?>
         </div>
-        <small><?= htmlspecialchars($psName) ?></small><br>
-        <small>[<?= substr($gTime, 10, 10) ?>]</small>
     </div>
 
     <div class="col p-2 my-1 mx-1 alarm-button <?= $strClassEnd ?>" style="cursor:pointer; height:96px" <?= $strBtnEnd; ?> >
         <div class="d-flex justify-content-between">
             <h6>НА ОБЕКТА</h6><?= diffBadge($timeToObject) ?>
+            <small>[<?= substr($oTime, 10, 10) ?>] - <?= htmlspecialchars($poName) ?></small>
         </div>
-        <small><?= htmlspecialchars($poName) ?></small><br>
-        <small>[<?= substr($oTime, 10, 10) ?>]</small>
     </div>
 
     <div class="col p-2 my-1 mx-0 text-white <?= $strClassReason ?>" <?= $strBtnReason ?> style="cursor:pointer; height:96px">
@@ -153,10 +152,10 @@ ob_start();
                         echo 'ПРИКЛЮЧИ';
                     }
                 ?>
-            </h6><?= diffBadge($timeToEnd) ?>
+            </h6>
+            <small>[<?= substr($rTime, 10, 10) ?>] - <?= htmlspecialchars($prName) ?></small><?= diffBadge($timeToEnd) ?>
         </div>
-        <small><?= htmlspecialchars($prName) ?></small><br>
-        <small>[<?= substr($rTime, 10, 10) ?>]</small>
+
     </div>
 </div>
 <?php
