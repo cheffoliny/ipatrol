@@ -73,7 +73,7 @@ if (empty($_SESSION['user_id'])) {
 <div class="d-flex" style="height: 100vh;">
     <?php include 'partials/sidebar.php'; ?>
 
-    <div id="main-content" class="main-content bg-dark px-3 py-0">
+    <div id="main-content" class="main-content bg-dark px-2 py-0">
         <div class="alert alert-info text-center my-2">
             <h6>Няма регистрирани аларми, <?= htmlspecialchars($_SESSION['first_name']); ?>!</h6>
         </div>

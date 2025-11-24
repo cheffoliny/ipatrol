@@ -53,7 +53,7 @@ $aQuery  = "
                     o.geo_lat,
                     o.geo_lan
                 ) * 1.15
-            ), 3),
+            ), 1),
             ' км.'
         ) AS distance_str
     FROM objects o

@@ -1,5 +1,5 @@
 <div class="sidebar d-flex flex-column justify-content-between bg-dark text-white p-1" style="width: 200px;">
-    <div class="h-75 overflow-auto">
+    <div class="overflow-auto" style="height: 90vh;">
         <!-- Панел с аларми -->
         <ul id="alarmPanel" class="list-group h-100 m-0 p-0"></ul>
     </div>
@@ -14,23 +14,35 @@
 
     <hr class="border-light my-0">
     <ul class="list-group m-0 p-0">
-       <li class="list-group-item d-flex justify-content-between align-items-center bg-primary text-white p-2 mx-1" onclick="loadHandAlarm();">
-           <i class="fa-solid fa-circle-plus me-2"></i> Аларма
-           <span class="badge bg-primary rounded-pill"> </span>
-       </li>
+
     </ul>
 
     <!-- Статус на връзката -->
-    <ul id="unknOpened"  class="list-group m-0 p-0"></ul>
-    <div id="connStatus" class="text-center my-0 py-0">
-        <div class="text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Проверка...</div>
-    </div>
-    <div class="text-center py-0 my-0">
-                <!-- Button trigger modal -->
-                <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#exitModal">
-                    <i class="fa-solid fa-right-from-bracket me-1"></i> ИЗХОД
-                </button>
 
+
+    <div class="text-center py-0 my-0">
+        <!-- Button trigger modal -->
+        <li id="connStatus" class="text-center my-0 py-1">
+              <div class="text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Проверка...</div>
+        </li>
+        <!-- Default dropup button -->
+        <div class="btn-group dropup w-100 m-0">
+            <button type="button" class="btn btn-secondary dropdown-toggle w-100 mx-0" data-bs-toggle="dropdown" aria-expanded="false">
+                ИЗБЕРИ ОПЦИЯ
+            </button>
+            <ul class="dropdown-menu bg-dark w-100">
+              <li class="list-group-item d-flex justify-content-between align-items-center bg-primary text-white p-2 " onclick="loadHandAlarm();">
+                 <i class="fa-solid fa-circle-plus me-2"></i> Аларма
+                 <span class="badge bg-primary rounded-pill"> </span>
+             </li>
+            <li><hr class="dropdown-divider border-light"></li>
+            <div id="unknOpened"  class="list-group m-0 p-0 w-100"></div>
+            <li><hr class="dropdown-divider border-light"></li>
+            <li type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#exitModal">
+                <i class="fa-solid fa-right-from-bracket me-1"></i> ИЗХОД
+            </li>
+            </ul>
+        </div>
     </div>
 
 
