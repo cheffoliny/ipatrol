@@ -194,11 +194,6 @@ if ($fragmentOnly) {
                     <i class="fa-solid fa-car mx-2"></i>
                 </button>
 
-                <button class="btn btn-sm btn-primary"
-                        onclick="toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>')">
-                    <i class="fa-solid fa-book mx-2"></i>
-                </button>
-
             </div>
         </div>
 
@@ -464,5 +459,6 @@ if ($fragmentOnly) {
     }
 
     toggleArchiveSection(<?= $oRec ?>, <?= $sID ?>, <?= $oNum ?>, '<?= $zTime ?>');
+
 
 </script>

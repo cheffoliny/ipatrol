@@ -963,259 +963,666 @@ function loadArchiveContent() {
 /* ============================================================
    HTML Marker (Leaflet версия) – запазено име HtmlMarker
    ============================================================ */
+
+/* =========================
+   HtmlMarker (Leaflet divIcon wrapper) + плавен визуален клас
+   ========================= */
 class HtmlMarker {
-    constructor(position, html, mapInstance) {
-        this.position = position;
-        this.html = html;
-        this.mapInstance = mapInstance;
-
-        this.divIcon = L.divIcon({
-            html: html,
-            className: "html-marker",
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
+    constructor(position, html, map) {
+        this.map = map;
+        this.position = { lat: parseFloat(position.lat), lng: parseFloat(position.lng) };
+        this.html = html || '';
+        this._icon = L.divIcon({
+            html: this.html,
+            className: 'html-marker',
+            iconSize: null
         });
+        this._marker = L.marker([this.position.lat, this.position.lng], {
+            icon: this._icon,
+            interactive: true,
+            keyboard: false
+        }).addTo(this.map);
 
-        this.marker = L.marker([position.lat, position.lng], {
-            icon: this.divIcon,
-            interactive: true
-        }).addTo(mapInstance);
+        // за плавна визуална анимация (css transition)
+        const el = this._marker.getElement();
+        if (el) el.classList.add('car-marker-smooth');
     }
 
     setPosition(position) {
-        this.marker.setLatLng([position.lat, position.lng]);
+        this.position = { lat: parseFloat(position.lat), lng: parseFloat(position.lng) };
+        if (this._marker) {
+            this._marker.setLatLng([this.position.lat, this.position.lng]);
+        }
+    }
+
+    getLatLng() {
+        return this._marker ? this._marker.getLatLng() : L.latLng(this.position.lat, this.position.lng);
     }
 
     onRemove() {
-        try { this.mapInstance.removeLayer(this.marker); } catch(e){}
-    }
-
-    get positionLatLng() {
-        return this.marker.getLatLng();
+        try { if (this._marker && this.map) this.map.removeLayer(this._marker); } catch (e) {}
+        this._marker = null;
     }
 }
 
-/* ============================================================
-   Haversine Distance (meters)
-   ============================================================ */
+/* ------------------------
+   Utility: Haversine distance (meters)
+   ------------------------ */
 function haversineDistanceMeters(a, b) {
     const toRad = v => v * Math.PI / 180;
-    const dLat = toRad(b.lat - a.lat);
-    const dLon = toRad(b.lng - a.lng);
-    const lat1 = toRad(a.lat);
-    const lat2 = toRad(b.lat);
+    const lat1 = (typeof a.lat === 'function') ? a.lat() : a.lat;
+    const lon1 = (typeof a.lng === 'function') ? a.lng() : a.lng;
+    const lat2 = (typeof b.lat === 'function') ? b.lat() : b.lat;
+    const lon2 = (typeof b.lng === 'function') ? b.lng() : b.lng;
     const R = 6371000;
-
-    const L = Math.sin(dLat/2)**2 +
-              Math.cos(lat1) * Math.cos(lat2) *
-              Math.sin(dLon/2)**2;
-
-    return R * 2 * Math.atan2(Math.sqrt(L), Math.sqrt(1-L));
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const L = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(L), Math.sqrt(1-L));
+    return R * c;
 }
 
-
-/* ============================================================
+/* ------------------------
    cleanupMapContainer(containerId)
-   ============================================================ */
+   ------------------------ */
 function cleanupMapContainer(containerId) {
     const el = document.getElementById(containerId);
     if (!el) return;
 
-    if (el._fallbackInterval) clearInterval(el._fallbackInterval);
+    if (el._fallbackInterval) {
+        clearInterval(el._fallbackInterval);
+        el._fallbackInterval = null;
+    }
 
     if (el._routeControl) {
-        try { el._routeControl.remove(); } catch(e){}
+        try {
+            el._routeControl.getPlan && el._routeControl.getPlan().setWaypoints([]);
+            el._localMap.removeControl(el._routeControl);
+        } catch (e) {}
         el._routeControl = null;
     }
 
     if (el._carMarker) {
-        el._carMarker.onRemove();
+        try { el._carMarker.onRemove(); } catch (e) {}
         el._carMarker = null;
     }
 
     if (el._objectMarker) {
-        el._objectMarker.onRemove();
+        try { el._objectMarker.onRemove(); } catch (e) {}
         el._objectMarker = null;
     }
 
-    el._localMap = null;
+    if (el._localMap) {
+        try { el._localMap.remove(); } catch (e) {}
+        el._localMap = null;
+    }
+
+    el._lastRouteOrigin = null;
+    el._lastRouteTs = 0;
+    el.classList.remove('ip-map-instance');
 }
 
-
-/* ============================================================
-   initMapUnique() — 100% нова OpenStreetMap имплементация
-   ============================================================ */
+/* ------------------------
+   initMapUnique(containerId, oLat, oLan, idUser)
+   Leaflet + OSM + L.Routing optimised
+   ------------------------ */
 function initMapUnique(containerId, oLat, oLan, idUser) {
     const el = document.getElementById(containerId);
     if (!el) return;
 
-    el.innerHTML = "";
+    // if map already exists for this container - reuse (do not recreate), but clear old markers/routes
+    if (el._localMap) {
+        // update object marker pos if needed and return existing api
+        if (el._objectMarker) {
+            el._objectMarker.setPosition({ lat: parseFloat(oLat), lng: parseFloat(oLan) });
+        }
+        return {
+            containerId: containerId,
+            map: el._localMap,
+            objectMarker: el._objectMarker,
+            carMarker: el._carMarker
+        };
+    }
+
+    el.innerHTML = '';
 
     const objectPos = { lat: parseFloat(oLat), lng: parseFloat(oLan) };
+    if (Number.isNaN(objectPos.lat) || Number.isNaN(objectPos.lng)) {
+        el.innerHTML = '<div class="p-3 text-center text-danger">Невалидни координати.</div>';
+        console.error('Invalid object coordinates', oLat, oLan);
+        return;
+    }
 
-    /* ---- Създаваме OSM карта ---- */
-    const map = L.map(containerId, {
-        zoomControl: true,
-        dragging: true,
-        tap: false
-    }).setView([objectPos.lat, objectPos.lng], 15);
+    // Create map (preferCanvas improves performance on many vector layers)
+    const map = L.map(el, { preferCanvas: true, zoomControl: true, attributionControl: true }).setView([objectPos.lat, objectPos.lng], 14);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19
+    // Tile layer (OSM)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        updateWhenIdle: true,   // prefer better performance
+        updateWhenZooming: false,
+        reuseTiles: true
     }).addTo(map);
 
-    /* ---- Статичен маркер на обекта ---- */
-    el._objectMarker = new HtmlMarker(objectPos,
-        `<i class="fa-solid fa-house-signal" style="font-size:32px;color:#dc3545;"></i>`,
-        map
-    );
-
     el._localMap = map;
+    el._objectPos = objectPos;
 
+    // Object (static) marker
+    el._objectMarker = new HtmlMarker(objectPos, `<i class="fa-solid fa-house-signal" style="font-size:32px; color:#dc3545; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i>`, map);
 
-    /* ====================================================
-       ROUTING (OSRM) – автоматична навигация
-       ==================================================== */
-    el._createRoute = function(startLat, startLng) {
-        if (el._routeControl) {
-            try { el._routeControl.remove(); } catch(e){}
+    // car marker placeholder
+    el._carMarker = null;
+    el._lastCarLatLng = null;
+
+    // route recalculation guards
+    el._lastRouteOrigin = null;
+    el._lastRouteTs = 0;
+    el._routeRecalcMinDistance = 30;   // meters
+    el._routeRecalcMinInterval = 30000; // ms
+
+    // Create routing control (initially hidden - CSS .leaflet-routing-container {display: none})
+    el._routeControl = L.Routing.control({
+        waypoints: [],
+        router: L.Routing.osrmv1({
+            serviceUrl: 'https://router.project-osrm.org/route/v1' // change for production
+        }),
+        show: false, // hide the default itinerary container
+        addWaypoints: false,
+        draggableWaypoints: false,
+        fitSelectedRoute: false,
+        routeWhileDragging: false,
+        createMarker: function() { return null; }, // we use our own markers
+        lineOptions: {
+            styles: [{ color: '#00bcd4', opacity: 0.9, weight: 5 }]
+        }
+    }).addTo(map);
+
+    // helper: fit bounds to show both object and car (but don't force zoom if already showing)
+    function fitToShowBoth() {
+        try {
+            const bounds = L.latLngBounds([ [objectPos.lat, objectPos.lng] ]);
+            if (el._carMarker) bounds.extend(el._carMarker.getLatLng());
+            // apply only when needed (avoid frequent map re-renders)
+            const currentBounds = map.getBounds ? map.getBounds() : null;
+            if (!currentBounds || !currentBounds.contains(bounds)) {
+                map.flyToBounds(bounds.pad(0.2), { animate: true, duration: 0.6 });
+            }
+        } catch (e) {}
+    }
+
+    // route recalculation with guards
+    el._recalcRouteFrom = function(lat, lng) {
+        const origin = { lat: parseFloat(lat), lng: parseFloat(lng) };
+        const now = Date.now();
+
+        if (el._lastRouteOrigin) {
+            const dist = haversineDistanceMeters(origin, el._lastRouteOrigin);
+            if (dist < el._routeRecalcMinDistance && (now - el._lastRouteTs) < el._routeRecalcMinInterval) {
+                // skip recalculation
+                return;
+            }
         }
 
-        el._routeControl = L.Routing.control({
-            waypoints: [
-                L.latLng(startLat, startLng),
+        // update waypoints (this triggers route calculation)
+        try {
+            el._routeControl.setWaypoints([
+                L.latLng(origin.lat, origin.lng),
                 L.latLng(objectPos.lat, objectPos.lng)
-            ],
-            lineOptions: {
-                addWaypoints: false,
-                styles: [{ color: "#00bcd4", weight: 5 }]
-            },
-            routeWhileDragging: false,
-            createMarker: () => null
-        }).addTo(map);
-    };
-
-
-    /* ====================================================
-       АНИМАЦИЯ НА ДВИЖЕНИЕТО
-       ==================================================== */
-    el._smoothMove = function(marker, from, to, duration = 800) {
-        const start = performance.now();
-
-        function animate(time) {
-            const progress = Math.min((time - start) / duration, 1);
-
-            const lat = from.lat + (to.lat - from.lat) * progress;
-            const lng = from.lng + (to.lng - from.lng) * progress;
-
-            marker.setPosition({ lat, lng });
-
-            if (progress < 1) requestAnimationFrame(animate);
+            ]);
+            el._lastRouteOrigin = origin;
+            el._lastRouteTs = now;
+        } catch (e) {
+            console.warn('Route setWaypoints error', e);
         }
-
-        requestAnimationFrame(animate);
     };
 
+    // Smooth animation state
+    el._anim = {
+        running: false,
+        startTs: 0,
+        duration: 800, // default ms for interpolation (will scale with distance below)
+        from: null,
+        to: null,
+        req: null
+    };
 
-    /* ====================================================
-       Update car position (анимация + логика)
-       ==================================================== */
-    el._updateCarPosition = function(lat, lng) {
+    // animate marker from A -> B (over duration)
+    function animateMarkerTo(markerInstance, toPos, duration) {
+        if (!markerInstance) return;
+        // cancel previous
+        if (el._anim.req) cancelAnimationFrame(el._anim.req);
+        const fromLatLng = markerInstance.getLatLng();
+        const from = { lat: fromLatLng.lat, lng: fromLatLng.lng };
+        const to = { lat: parseFloat(toPos.lat), lng: parseFloat(toPos.lng) };
+        const start = performance.now();
+        const dur = Math.max(200, duration); // min duration
+
+        function step(now) {
+            const t = Math.min(1, (now - start) / dur);
+            // ease (smoothstep)
+            const tt = t * t * (3 - 2 * t);
+            const lat = from.lat + (to.lat - from.lat) * tt;
+            const lng = from.lng + (to.lng - from.lng) * tt;
+            markerInstance.setPosition({ lat, lng });
+            if (t < 1) {
+                el._anim.req = requestAnimationFrame(step);
+            } else {
+                el._anim.req = null;
+            }
+        }
+        el._anim.req = requestAnimationFrame(step);
+    }
+
+    // helper: update car position (create if needed)
+    el._updateCarPosition = function(lat, lng, opts = {}) {
+        if (typeof lat === 'undefined' || typeof lng === 'undefined') return;
+        const pos = { lat: parseFloat(lat), lng: parseFloat(lng) };
+
         if (!el._carMarker) {
-            el._carMarker = new HtmlMarker(
-                { lat, lng },
-                `<i class="fa-solid fa-car-on" style="font-size:30px;color:#0d6efd;"></i>`,
-                map
-            );
+            // create car marker
+            const carHtml = `<div style="pointer-events:auto;"><i class="fa-solid fa-car-on" style="font-size:30px; color:#0d6efd; text-shadow:0 1px 3px rgba(0,0,0,0.5)"></i></div>`;
+            el._carMarker = new HtmlMarker(pos, carHtml, map);
+            el._lastCarLatLng = pos;
 
-            el._createRoute(lat, lng);
-            autoFit();
+            // setup initial route
+            try { el._recalcRouteFrom(pos.lat, pos.lng); } catch (e) {}
+            // fit view
+            fitToShowBoth();
             return;
         }
 
-        const from = el._carMarker.positionLatLng;
-        const to = { lat, lng };
+        // compute distance to last known
+        const last = el._lastCarLatLng || el._carMarker.getLatLng();
+        const dist = haversineDistanceMeters(last, pos);
 
-        el._smoothMove(el._carMarker, from, to);
-
-        const distance = haversineDistanceMeters(from, to);
-        if (distance > 20) {
-            el._createRoute(lat, lng);
+        // derive animation duration based on distance and optional speed
+        let duration = 700;
+        if (opts && opts.speed && typeof opts.speed === 'number' && opts.speed > 0) {
+            // speed in m/s -> duration = distance / speed * 1000
+            duration = Math.min(5000, Math.max(200, (dist / opts.speed) * 1000));
+        } else {
+            // scale duration by distance (longer moves animate slightly longer)
+            duration = Math.min(3000, Math.max(200, dist * 10));
         }
 
-        autoFit();
+        // animate marker
+        try {
+            animateMarkerTo(el._carMarker, pos, duration);
+        } catch (e) { el._carMarker.setPosition(pos); }
+
+        el._lastCarLatLng = pos;
+
+        // decide whether to recalc route
+        try { el._recalcRouteFrom(pos.lat, pos.lng); } catch (e) {}
+
+        // minimal fit bounds only when necessary (avoid remounting tiles)
+        try {
+            const bounds = L.latLngBounds([ [objectPos.lat, objectPos.lng], [pos.lat, pos.lng] ]);
+            // if current map view doesn't contain both points, pan/fit gently
+            if (!map.getBounds().contains(bounds)) {
+                map.flyToBounds(bounds.pad(0.2), { animate: true, duration: 0.6 });
+            }
+        } catch (e) {}
     };
 
+    // fallback polling (throttled)
+    if (el._fallbackInterval) {
+        clearInterval(el._fallbackInterval);
+        el._fallbackInterval = null;
+    }
+    el._fallbackInterval = setInterval(() => {
+        $.ajax({
+            url: 'system/get_geo_position.php',
+            method: 'GET',
+            data: { idUser: idUser },
+            success: function(resp) {
+                if (!resp) return;
+                try {
+                    const parts = resp.trim().split(',');
+                    const lat = parseFloat(parts[0]);
+                    const lon = parseFloat(parts[1]);
+                    if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+                        el._updateCarPosition(lat, lon);
+                    }
+                } catch (err) { console.warn('Fallback parse error', err); }
+            },
+            error: function() { /* silent */ }
+        });
+    }, 10000);
 
-    /* ====================================================
-       AUTO ZOOM — автоматично мащабиране
-       ==================================================== */
-    function autoFit() {
-        if (!el._carMarker) return;
+    // initial fallback fetch once
+    $.ajax({
+        url: 'system/get_geo_position.php',
+        method: 'GET',
+        data: { idUser: idUser },
+        success: function(resp) {
+            if (!resp) return;
+            try {
+                const parts = resp.trim().split(',');
+                const lat = parseFloat(parts[0]);
+                const lon = parseFloat(parts[1]);
+                if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+                    el._updateCarPosition(lat, lon);
+                }
+            } catch (err) { console.warn('Initial fallback parse error', err); }
+        }
+    });
 
-        const bounds = L.latLngBounds(
-            el._carMarker.positionLatLng,
-            el._objectMarker.positionLatLng
-        );
-
-        map.fitBounds(bounds, { padding: [40, 40] });
+    // if we have cached GPS from WebView -> apply
+    if (window.__lastGps && window.__lastGps.lat && window.__lastGps.lng) {
+        try { el._updateCarPosition(window.__lastGps.lat, window.__lastGps.lng, { speed: window.__lastGps.speed }); } catch (e) {}
     }
 
+    el.classList.add('ip-map-instance');
 
-    /* ====================================================
-       Fallback AJAX
-       ==================================================== */
-    el._fallbackInterval = setInterval(() => {
-        $.get("system/get_geo_position.php", { idUser }, function(resp) {
-            if (!resp) return;
-            const [lat, lng] = resp.trim().split(",").map(parseFloat);
-            el._updateCarPosition(lat, lng);
-        });
-    }, 8000);
-
-    return map;
+    return {
+        containerId: containerId,
+        map: map,
+        objectMarker: el._objectMarker,
+        carMarker: el._carMarker
+    };
 }
 
-
-/* ============================================================
-   openMapModal() — без промяна на синтаксис
-   ============================================================ */
+/* ------------------------
+   openMapModal(modalId, oLat, oLan, idUser)
+   ------------------------ */
 function openMapModal(modalId, oLat, oLan, idUser) {
     const modalEl = document.getElementById(modalId);
-    if (!modalEl) return;
+    if (!modalEl) {
+        console.error('openMapModal: modal element not found', modalId);
+        return;
+    }
 
     const bsModal = new bootstrap.Modal(modalEl);
     bsModal.show();
 
-    const suffix = modalId.replace(/^modalMap/i, "");
-    const containerId = "mapContainer_" + suffix;
+    const suffix = modalId.replace(/^modalMap/i, '');
+    const containerId = 'mapContainer_' + suffix;
 
-    setTimeout(() => { initMapUnique(containerId, oLat, oLan, idUser); }, 300);
+    // wait a bit for modal animation so container has size
+    setTimeout(() => {
+        initMapUnique(containerId, oLat, oLan, idUser);
+    }, 300);
 
-    const handlerName = "__cleanup_handler_" + modalId;
-
+    const handlerName = '__cleanup_handler_' + modalId;
     if (modalEl[handlerName]) {
-        modalEl.removeEventListener("hidden.bs.modal", modalEl[handlerName]);
+        modalEl.removeEventListener('hidden.bs.modal', modalEl[handlerName]);
+        modalEl[handlerName] = null;
     }
 
     modalEl[handlerName] = function() {
         cleanupMapContainer(containerId);
+        try {
+            if (typeof updateInterval !== 'undefined') { clearInterval(updateInterval); updateInterval = null; }
+        } catch (e) {}
+        try { modalEl.removeEventListener('hidden.bs.modal', modalEl[handlerName]); } catch (e) {}
+        modalEl[handlerName] = null;
     };
 
-    modalEl.addEventListener("hidden.bs.modal", modalEl[handlerName]);
+    modalEl.addEventListener('hidden.bs.modal', modalEl[handlerName]);
 }
 
+/* ------------------------
+   Глобална функция за подаване на GPS от WebView
+   ------------------------ */
+window.updateCarFromWebView = function(lat, lng, speed, bearing, accuracy, altitude) {
+    try {
+        const maps = document.querySelectorAll('[id^="mapContainer_"]');
+        maps.forEach(function(mapEl) {
+            if (!mapEl) return;
+            if (typeof mapEl._updateCarPosition === 'function') {
+                try {
+                    mapEl._updateCarPosition(lat, lng, { speed, bearing, accuracy, altitude });
+                } catch (e) {
+                    console.warn('mapEl._updateCarPosition error', e);
+                }
+            }
+        });
+        window.__lastGps = { lat, lng, speed, bearing, accuracy, altitude, ts: Date.now() };
+    } catch (e) {
+        console.error('updateCarFromWebView error', e);
+    }
+};
+
+
+//class HtmlMarker {
+//    constructor(position, html, mapInstance) {
+//        this.position = position;
+//        this.html = html;
+//        this.mapInstance = mapInstance;
+//
+//        this.icon = L.divIcon({
+//            html: html,
+//            className: 'leaflet-html-marker',
+//            iconSize: null
+//        });
+//
+//        this.marker = L.marker(position, { icon: this.icon }).addTo(mapInstance);
+//    }
+//
+//    setPosition(position) {
+//        this.position = position;
+//        this.marker.setLatLng(position);
+//    }
+//
+//    onRemove() {
+//        if (this.mapInstance && this.marker) {
+//            this.mapInstance.removeLayer(this.marker);
+//        }
+//    }
+//}
+//
+//
+///* ============================================================
+//   Haversine Distance (meters)
+//   ============================================================ */
+//function haversineDistanceMeters(a, b) {
+//    const toRad = v => v * Math.PI / 180;
+//    const lat1 = a.lat, lon1 = a.lng;
+//    const lat2 = b.lat, lon2 = b.lng;
+//    const R = 6371000;
+//
+//    const dLat = toRad(lat2 - lat1);
+//    const dLon = toRad(lon2 - lon1);
+//
+//    const L =
+//        Math.sin(dLat/2)**2 +
+//        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+//        Math.sin(dLon/2)**2;
+//
+//    return R * 2 * Math.atan2(Math.sqrt(L), Math.sqrt(1-L));
+//}
+//
+//
+//
+///* ============================================================
+//   cleanupMapContainer(containerId)
+//   ============================================================ */
+//function cleanupMapContainer(containerId) {
+//    const el = document.getElementById(containerId);
+//    if (!el) return;
+//
+//    if (el._fallbackInterval) clearInterval(el._fallbackInterval);
+//    el._fallbackInterval = null;
+//
+//    if (el._routingControl) {
+//        el._routingControl.remove();
+//        el._routingControl = null;
+//    }
+//
+//    if (el._carMarker) { el._carMarker.onRemove(); }
+//    if (el._objectMarker) { el._objectMarker.onRemove(); }
+//
+//    el._localMap = null;
+//}
+//
+//
+//
+///* ============================================================
+//   initMapUnique() — 100% нова OpenStreetMap имплементация
+//   ============================================================ */
+//function initMapUnique(containerId, oLat, oLan, idUser) {
+//    const el = document.getElementById(containerId);
+//    if (!el) return;
+//
+//    el.innerHTML = '';
+//
+//    const objectPos = L.latLng(parseFloat(oLat), parseFloat(oLan));
+//
+//    const map = L.map(containerId, {
+//        zoomControl: true,
+//        attributionControl: false,
+//        zoomSnap: 0.1
+//    }).setView(objectPos, 14);
+//
+//    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+//        maxZoom: 19
+//    }).addTo(map);
+//
+//    el._localMap = map;
+//
+//    /** MARKERS ****************************/
+//    el._objectMarker = new HtmlMarker(objectPos,
+//        `<i class="fa-solid fa-house-signal" style="font-size:32px;color:#dc3545;"></i>`,
+//        map
+//    );
+//
+//    el._carMarker = null;
+//    el._lastCarLatLng = null;
+//
+//    /** ROUTING ****************************/
+//    el._routingControl = L.Routing.control({
+//        waypoints: [],
+//        routeWhileDragging: false,
+//        addWaypoints: false,
+//        show: false,             // ← turn-by-turn panel hidden
+//        draggableWaypoints: false,
+//        lineOptions: {
+//            styles: [{ color: "#00bcd4", weight: 5, opacity: 0.9 }]
+//        }
+//    }).addTo(map);
+//
+//    /** AUTO-FIT ***************************/
+//    el._fitMap = function() {
+//        if (!el._carMarker) return;
+//        const bounds = L.latLngBounds([ el._objectMarker.position, el._carMarker.position ]);
+//        map.fitBounds(bounds, { padding: [40,40] });
+//    };
+//
+//    /** SMOOTH ANIMATION OF CAR ************/
+//    function animateCar(oldPos, newPos, duration = 700) {
+//        const start = performance.now();
+//
+//        function step(ts) {
+//            const progress = Math.min((ts - start) / duration, 1);
+//            const lat = oldPos.lat + (newPos.lat - oldPos.lat) * progress;
+//            const lng = oldPos.lng + (newPos.lng - oldPos.lng) * progress;
+//
+//            el._carMarker.setPosition(L.latLng(lat, lng));
+//
+//            if (progress < 1) requestAnimationFrame(step);
+//        }
+//        requestAnimationFrame(step);
+//    }
+//
+//    /** UPDATE CAR *************************/
+//    el._updateCarPosition = function(lat, lng) {
+//        const newLL = L.latLng(parseFloat(lat), parseFloat(lng));
+//
+//        if (!el._carMarker) {
+//            el._carMarker = new HtmlMarker(
+//                newLL,
+//                `<i class="fa-solid fa-car-on" style="font-size:30px;color:#0d6efd;"></i>`,
+//                map
+//            );
+//            el._lastCarLatLng = newLL;
+//            el._fitMap();
+//        } else {
+//            animateCar(el._lastCarLatLng, newLL);
+//            el._lastCarLatLng = newLL;
+//        }
+//
+//        // ROUTE UPDATE
+//        el._routingControl.setWaypoints([ newLL, objectPos ]);
+//
+//        el._fitMap();
+//    };
+//
+//    /** FALLBACK AJAX *************************/
+//    el._fallbackInterval = setInterval(() => {
+//        $.get('system/get_geo_position.php', { idUser }, resp => {
+//            if (!resp) return;
+//            const [lat, lng] = resp.trim().split(',');
+//            el._updateCarPosition(parseFloat(lat), parseFloat(lng));
+//        });
+//    }, 10000);
+//
+//    // initial fetch
+//    $.get('system/get_geo_position.php', { idUser }, resp => {
+//        if (!resp) return;
+//        const [lat, lng] = resp.trim().split(',');
+//        el._updateCarPosition(parseFloat(lat), parseFloat(lng));
+//    });
+//
+//    if (window.__lastGps) {
+//        el._updateCarPosition(window.__lastGps.lat, window.__lastGps.lng);
+//    }
+//
+//    return {
+//        containerId,
+//        map,
+//        objectMarker: el._objectMarker,
+//        carMarker: el._carMarker
+//    };
+//}
+//
+//
+//
+///* ============================================================
+//   openMapModal() — без промяна на синтаксис
+//   ============================================================ */
+//function openMapModal(modalId, oLat, oLan, idUser) {
+//    const modalEl = document.getElementById(modalId);
+//    if (!modalEl) return;
+//
+//    const bsModal = new bootstrap.Modal(modalEl);
+//    bsModal.show();
+//
+//    const suffix = modalId.replace(/^modalMap/i, '');
+//    const containerId = 'mapContainer_' + suffix;
+//
+//    setTimeout(() => {
+//        initMapUnique(containerId, oLat, oLan, idUser);
+//    }, 300);
+//
+//    const handlerName = '__cleanup_handler_' + modalId;
+//    if (modalEl[handlerName]) {
+//        modalEl.removeEventListener('hidden.bs.modal', modalEl[handlerName]);
+//    }
+//
+//    modalEl[handlerName] = function() {
+//        cleanupMapContainer(containerId);
+//        modalEl.removeEventListener('hidden.bs.modal', modalEl[handlerName]);
+//        modalEl[handlerName] = null;
+//    };
+//
+//    modalEl.addEventListener('hidden.bs.modal', modalEl[handlerName]);
+//}
+//
+//
 
 /* ============================================================
    updateCarFromWebView()
    ============================================================ */
-window.updateCarFromWebView = function(lat, lng) {
-    document.querySelectorAll('[id^="mapContainer_"]').forEach(el => {
-        if (typeof el._updateCarPosition === "function") {
-            el._updateCarPosition(lat, lng);
-        }
-    });
-};
+//window.updateCarFromWebView = function(lat, lng) {
+//    document.querySelectorAll('[id^="mapContainer_"]').forEach(el => {
+//        if (typeof el._updateCarPosition === "function") {
+//            el._updateCarPosition(lat, lng);
+//        }
+//    });
+//};
 
 /* ------------------------
    КРАЙ Универсален HtmlMarker (OverlayView) - лек HTML маркер

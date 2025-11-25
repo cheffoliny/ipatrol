@@ -47,3 +47,23 @@
     overflow: hidden;
     transition: all 0.35s ease;
 }
+
+
+
+/* OPenStreetMap Панелът да е скрит по подразбиране */
+/* Скриваме секцията с turn-by-turn (по подразбиране) */
+.leaflet-routing-container, .leaflet-routing-alt {
+  display: none !important;
+}
+
+/* Лек стил за HTML-маркера (по желание) */
+.html-marker {
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  /* може да си добавиш transitions/текстови сенки тук */
+}
+
+/* Плавна ротация/изглаждане, ако искаш (не задължително) */
+.car-marker-smooth {
+  transition: transform 0.2s linear;
+}
