@@ -129,9 +129,14 @@ ob_start();
 <div id="<?= $alarmStatusContainer ?>" class="row px-0 mx-0 mb-2" data-aid="<?= $aID ?>" data-break-refresh="<?= ($arID > 0 ? '1' : '0') ?>">
     <div class="col p-2 my-1 mx-0 text-white alarm-button <?= $strClassStart ?>" style="cursor:pointer; height:96px" <?= $strBtnStart?> >
         <div class="d-flex justify-content-between">
-            <h6>ПРИЕМАМ</h6>
+         <?php
+            if($gTime == '00.00.0000 00:00:00') {
+                echo '<h6>ПРИЕМАМ</h6>';
+            } else {
+                echo '<small>['. substr($gTime, 10, 10).'] - '.htmlspecialchars($psName)  ?></small><?= diffBadge($timeToStart) ?>
 
-        <small>[<?= substr($gTime, 10, 10) ?>] - <?= htmlspecialchars($psName) ?></small><?= diffBadge($timeToStart) ?>
+            }
+        ?>
         </div>
     </div>
 

@@ -102,12 +102,12 @@ $(document).on('click', '.confirm-familiar-btn', function () {
     let oID = $(this).data('oid');
     let tVisit = $(this).data('type');
 
-    confirmUnknown(oID, tVisit);
+    confirmUnknownMap(oID, tVisit);
 });
 
 
 // Оригиналната функция без промяна
-function confirmUnknown(oID, tVisit) {
+function confirmUnknownMap(oID, tVisit) {
 
     $.post('api/unknown_confirm.php', {
         oID: oID,
