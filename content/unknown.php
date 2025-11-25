@@ -232,7 +232,7 @@ echo '
                         data-oid="<?php echo $oID; ?>"
                         data-type="familiar"
                         data-bs-dismiss="modal">
-                    Познавам
+                    <?= $oNum.' - '.$oName ?> - Познавам
                 </button>
             </div>
         </div>
