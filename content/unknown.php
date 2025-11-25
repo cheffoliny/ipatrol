@@ -37,6 +37,7 @@ $aQuery  = "
         o.id AS oID,
         o.num AS oNum,
         o.name AS oName,
+        REPLACE(o.operativ_info , '\"', ' ') AS oInfo,
         o.geo_lat AS oLat, o.geo_lan AS oLan,
         CONCAT(
             ROUND((
@@ -126,6 +127,7 @@ while ($row = mysqli_fetch_assoc($aResult)) {
     $oLat  = $row['oLat'];
     $oNum  = htmlspecialchars($row['oNum']);
     $oName = htmlspecialchars($row['oName']);
+    $oInfo = htmlspecialchars($row['oInfo']);
     $oDist = htmlspecialchars($row['distance_str']);
     $modalID = "myModal".$oID;
     $strMapModal = 'modalMap'.$oID;
@@ -185,8 +187,8 @@ echo '
                 </div>
                 <div class="modal-body">
     ';
-                    get_object_faces($oID);
-    echo '
+                //    get_object_faces($oID);
+    echo $oInfo.'
                 </div>
             </div>
         </div>
