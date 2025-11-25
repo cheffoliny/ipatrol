@@ -134,7 +134,6 @@ ob_start();
                 echo '<h6>ПРИЕМАМ</h6>';
             } else {
                 echo '<small>['. substr($gTime, 10, 10).'] - '.htmlspecialchars($psName).'</small> <br/>'.diffBadge($timeToStart);
-
             }
         ?>
         </div>
@@ -142,25 +141,27 @@ ob_start();
 
     <div class="col p-2 my-1 mx-1 alarm-button <?= $strClassEnd ?>" style="cursor:pointer; height:96px" <?= $strBtnEnd; ?> >
         <div class="d-flex justify-content-between">
-            <h6>НА ОБЕКТА</h6><?= diffBadge($timeToObject) ?>
-            <small>[<?= substr($oTime, 10, 10) ?>] - <?= htmlspecialchars($poName) ?></small>
+             <?php
+                if($oTime == '00.00.0000 00:00:00' && $gTime != '00.00.0000 00:00:00') {
+                    echo '<h6>НА ОБЕКТА</h6>';
+                } else {
+                    echo '<small>['. substr($oTime, 10, 10).'] - '.htmlspecialchars($poName).'</small> <br/>'.diffBadge($timeToObject);
+                }
+            ?>
         </div>
     </div>
 
     <div class="col p-2 my-1 mx-0 text-white <?= $strClassReason ?>" <?= $strBtnReason ?> style="cursor:pointer; height:96px">
         <div class="d-flex justify-content-between">
-            <h6>
-                <?php
-                    if($arID > 0) {
-                        echo $arName;
-                    } else {
-                        echo 'ПРИКЛЮЧИ';
-                    }
-                ?>
-            </h6>
-            <small>[<?= substr($rTime, 10, 10) ?>] - <?= htmlspecialchars($prName) ?></small><?= diffBadge($timeToEnd) ?>
+            <?php
+                if($arID > 0) {
+                    echo '<small>['.substr($rTime, 10, 10).'] - '.htmlspecialchars($prName).'</small> <br/>'.diffBadge($timeToEnd);
+                    echo '<br/><p class="w-100">'.$arName.'<p>';
+                } else {
+                    echo '<h6>ПРИКЛЮЧИ</h6>';
+                }
+            ?>
         </div>
-
     </div>
 </div>
 <?php
