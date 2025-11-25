@@ -178,12 +178,9 @@ function get_object_archiv($oRec, $sID, $oNum, $zTime, $ListSize, $ListLimit)
         $mTime = htmlspecialchars($oRow['msg_time']);
         $msg = htmlspecialchars($oRow['msg']);
         $isAlarm = intval($oRow['alarm']) === 1;
-        $bgClass = 'text-white bg-opacity-75';
 
         // 🎨 Динамични класове
-        $bgClass = ($mID == $sID)
-            ? 'bg-danger text-white bg-opacity-75 fw-bold'
-            : ($isAlarm ? 'bg-warning text-bg-warning bg-opacity-75' : 'bg-dark');
+        $bgClass = ($mID == $sID) ? 'bg-danger text-white bg-opacity-75 fw-bold' : ($isAlarm ? 'bg-warning text-bg-warning bg-opacity-75' : 'bg-dark text-white');
 
         $html .= '
             <div class="row p-0 pb-1 m-0 border-bottom border-secondary small ' . $bgClass . '">
