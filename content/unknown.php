@@ -158,14 +158,14 @@ echo '
         <div class="col text-end">
             <button class="btn btn-sm btn-success mx-1 btn-familiar"
                     data-oid="'.$oID.'" data-type="familiar">
-                <i class="fa-solid fa-house-circle-check me-2"></i> Познавам
+                <i class="fa-solid fa-circle-check mx-1mx"></i> Познавам
             </button>
 
             <!-- 🗺️ Бутон за карта -->
-            <button class="btn btn-sm btn-success"
+            <button class="btn btn-sm btn-info"
                     data-oid="'.$oID.'" data-type="familiar"
                     onclick="openMapModal(\''.$strMapModal.'\', \''.$oLat.'\', \''.$oLan.'\', '.$idUser.')">
-                <i class="fa-solid fa-car mx-2"></i>
+                <i class="fa-solid fa-car mx-1"></i> Опознай
             </button>
 
         </div>
@@ -232,7 +232,7 @@ echo '
                         data-oid="<?php echo $oID; ?>"
                         data-type="familiar"
                         data-bs-dismiss="modal">
-                    Потвърждавам
+                    Познавам
                 </button>
             </div>
         </div>
