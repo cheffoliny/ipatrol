@@ -126,7 +126,7 @@ $alarmStatusContainer = 'alarm-status-container'.$oID;
 ob_start();
 
 ?>
-<div id="<?= $alarmStatusContainer ?>" class="row px-0 mx-0 mb-2" data-aid="<?= $aID ?>" data-break-refresh="<?= ($arID > 0 ? '1' : '0') ?>">
+<div id="<?= $alarmStatusContainer ?>" class="row px-0 mx-0 mb-1" data-aid="<?= $aID ?>" data-break-refresh="<?= ($arID > 0 ? '1' : '0') ?>">
     <div class="col p-2 my-1 mx-0 text-white alarm-button <?= $strClassStart ?>" style="cursor:pointer; height:96px" <?= $strBtnStart?> >
         <div class="d-flex justify-content-between">
          <?php
@@ -152,11 +152,11 @@ ob_start();
     </div>
 
     <div class="col p-2 my-1 mx-0 text-white <?= $strClassReason ?>" <?= $strBtnReason ?> style="cursor:pointer; height:96px">
-        <div class="d-flex justify-content-between">
+        <div class="">
             <?php
                 if($arID > 0) {
-                    echo '<small>['.substr($rTime, 10, 10).'] - '.htmlspecialchars($prName).'</small> <br/>'.diffBadge($timeToEnd);
-                    echo '<br/><p class="w-100">'.$arName.'<p>';
+                    echo '<small>['.substr($rTime, 10, 10).'] - '.htmlspecialchars($prName). '</small>'.diffBadge($timeToEnd);
+                    echo '<br/><h6 class="w-100">'.$arName.'<h6>';
                 } else {
                     echo '<h6>ПРИКЛЮЧИ</h6>';
                 }
