@@ -135,7 +135,7 @@ function get_object_archiv($oRec, $sID, $oNum, $zTime, $ListSize, $ListLimit)
                     Архивната таблица за този месец (<b>$mTable</b>) не съществува.
                 </div>";
     }
-
+///ipatroln.infra-lg.com/system/get_object_archiv.php?oRec=1&sID=2025110343783&oNum=1327&zTime=2025-11-25%2008%3A22%3A33&listSize=720&listLimit=20
     // 🧮 Подготвена заявка
     $query = "
         SELECT
@@ -178,6 +178,7 @@ function get_object_archiv($oRec, $sID, $oNum, $zTime, $ListSize, $ListLimit)
         $mTime = htmlspecialchars($oRow['msg_time']);
         $msg = htmlspecialchars($oRow['msg']);
         $isAlarm = intval($oRow['alarm']) === 1;
+        $bgClass = 'text-white bg-opacity-75';
 
         // 🎨 Динамични класове
         $bgClass = ($mID == $sID)
