@@ -97,6 +97,43 @@ $(document).on('click', '#confirmFamiliarYes', function () {
     confirmUnknown(oID, tVisit);
 });
 
+$(document).on('click', '.confirm-familiar-btn', function () {
+
+    let oID = $(this).data('oid');
+    let tVisit = $(this).data('type');
+
+    confirmUnknown(oID, tVisit);
+});
+
+
+// Оригиналната функция без промяна
+function confirmUnknown(oID, tVisit) {
+
+    $.post('api/unknown_confirm.php', {
+        oID: oID,
+        type_visit: tVisit
+    })
+    .done(function (res) {
+
+        if (res.status === "success") {
+
+            let row = $(".object-row-" + oID);
+
+            row.addClass("fade-out");
+
+            setTimeout(() => row.remove(), 400);
+
+            showToast("Обектът е успешно добавен в опознати!");
+
+        } else {
+            showToast("⚠️ Грешка: " + res.message, "error");
+        }
+
+    })
+    .fail(function () {
+        showToast("⚠️ Грешка при заявката към сървъра!", "error");
+    });
+}
 
 // Функцията за потвърждение на обекта
 function confirmUnknown(oID, tVisit) {

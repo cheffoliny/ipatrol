@@ -163,6 +163,7 @@ echo '
 
             <!-- 🗺️ Бутон за карта -->
             <button class="btn btn-sm btn-success"
+                    data-oid="'.$oID.'" data-type="familiar"
                     onclick="openMapModal(\''.$strMapModal.'\', \''.$oLat.'\', \''.$oLan.'\', '.$idUser.')">
                 <i class="fa-solid fa-car mx-2"></i>
             </button>
@@ -226,9 +227,13 @@ echo '
                 <div class="modal-body p-0">
                     <div id="mapContainer_<?= $oID ?>" style="width:100%;height:500px;"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success" id="confirmFamiliarYes">Познавам</button>
-                </div>
+                <button type="button"
+                        class="btn btn-success confirm-familiar-btn"
+                        data-oid="<?php echo $oID; ?>"
+                        data-type="familiar"
+                        data-bs-dismiss="modal">
+                    Потвърждавам
+                </button>
             </div>
         </div>
     </div>
