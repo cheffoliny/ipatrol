@@ -133,7 +133,7 @@ ob_start();
             if($gTime == '00.00.0000 00:00:00') {
                 echo '<h6>ПРИЕМАМ</h6>';
             } else {
-                echo '<small>['. substr($gTime, 10, 10).'] - '.htmlspecialchars($psName)  ?></small><?= diffBadge($timeToStart) ?>
+                echo '<small>['. substr($gTime, 10, 10).'] - '.htmlspecialchars($psName).'</small> <br/>'.diffBadge($timeToStart);
 
             }
         ?>
