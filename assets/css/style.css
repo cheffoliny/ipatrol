@@ -67,3 +67,7 @@
 .car-marker-smooth {
   transition: transform 0.2s linear;
 }
+
+.dark-red {
+    background-color: #aa0000 !important;
+}
