@@ -4,7 +4,7 @@ require_once 'custom_view.php';
 $str_bg_color = isset( $bg_color ) ? $bg_color : ' bg-dark '
 
 ?>
-<div class="sidebar d-flex flex-column justify-content-between <?= $str_bg_color ?> text-white p-1 border border-danger" style="width: 200px;">
+<div class="sidebar d-flex flex-column justify-content-between <?= $str_bg_color ?> text-white p-1" style="width: 200px;">
     <div class="overflow-auto" style="height: 90vh;">
         <!-- Панел с аларми -->
         <ul id="alarmPanel" class="list-group h-100 m-0 p-0 <?= $str_bg_color ?> "></ul>
