@@ -64,7 +64,7 @@ $aQuery  = "
         AND vo.to_arc = 0
         AND vo.id_person = $idUser
     WHERE
-        o.id_office = 66
+        o.id_office IN(66,81)
         AND o.id_status <> 4
         AND o.is_sod = 1
         AND vo.id_object IS NULL
