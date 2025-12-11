@@ -2,19 +2,6 @@
 
 $lifetime = 10 * 365 * 24 * 60 * 60; // 10 years
 
-// Must be set before session_start()
-ini_set('session.gc_maxlifetime', $lifetime);
-ini_set('session.cookie_lifetime', $lifetime);
-
-// Start the session
-session_start();
-
-// Example usage
-$_SESSION['user'] = 'John Doe';
-echo "Session set. It will last for 10 years unless manually destroyed.";
-?>
-
-
 session_set_cookie_params([
     'lifetime' => $lifetime,
     'path' => '/',
