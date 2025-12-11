@@ -34,6 +34,7 @@ $query = "
 
 if (mysqli_query($db_sod, $query)) {
     echo json_encode(['status' => 'success', 'oID' => $oID]);
-} else {
-    echo json_encode(['status' => 'error', 'msg' => mysqli_error($db_sod)]);
 }
+//else {
+//    echo json_encode(['status' => 'error', 'msg' => mysqli_error($db_sod)]);
+//}
