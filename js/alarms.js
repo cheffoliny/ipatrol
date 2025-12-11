@@ -1651,11 +1651,12 @@ function startAutoAddAlarms() {
                 }
 
                 // ❗ Няма нужда от друга логика — файлът сам добавя алармите в базата
-            },
-
-            error: function (xhr, status, error) {
-                console.error("auto_add_alarm AJAX error:", status, error);
             }
+//            ,
+//
+//            error: function (xhr, status, error) {
+//                console.error("auto_add_alarm AJAX error:", status, error);
+//            }
         });
 
     }, 5000);
