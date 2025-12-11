@@ -110,7 +110,7 @@ global $db_sod, $db_system;
                         AND wcm.send_time   = '0000-00-00 00:00:00'
                         AND wcm.reason_time = '0000-00-00 00:00:00' ";
 
-    $oResult = mysqli_query( $db_sod, $oQuery ) //OR die( "".$oQuery );
+    $oResult = mysqli_query( $db_sod, $oQuery ); //OR die( "".$oQuery );
     $num_oRows	= mysqli_num_rows( $oResult  );
 
     while( $oRow = mysqli_fetch_assoc( $oResult ) ) {
