@@ -123,9 +123,9 @@ global $db_sod, $db_system;
         $str_note = $diff." ".$alarm_to_open_time." ".$op." ".$wcmt;
         if( ( $diff > $alarm_to_open_time && $op == 0 ) || ( $diff > $alarm_to_open_time && $op > $alarm_to_open_time ) ) {
             $sQuery	 = "UPDATE work_card_movement SET send_time = NOW(), note = '".$str_note." ".$maxID."' WHERE id = '".$wcmID."' ";
-            $sResult	=	mysqli_query( $db_sod, $sQuery ) OR die( "".$sQuery );
+            $sResult	=	mysqli_query( $db_sod, $sQuery ); // OR die( "".$sQuery );
         } else if( $diff > $alarm_to_open_time && ( $op > 0 && $op <= $alarm_to_open_time) ) {
             $sQuery	 = "UPDATE work_card_movement SET reason_time = NOW(), id_alarm_reasons = 7, note = '".$str_note." ".$maxID."' WHERE id = '".$wcmID."' ";
-            $sResult	=	mysqli_query( $db_sod, $sQuery ) OR die( "".$sQuery );
+            $sResult	=	mysqli_query( $db_sod, $sQuery ); //OR die( "".$sQuery );
         }
     }
