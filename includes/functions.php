@@ -139,11 +139,12 @@ function get_object_archiv($oRec, $sID, $oNum, $zTime, $ListSize, $ListLimit)
     // 🧮 Подготвена заявка
     $query = "
         SELECT
-            id,
-            DATE_FORMAT(msg_time, '%H:%i:%s') AS msg_time,
-            num,
-            msg,
-            alarm
+            `id`,
+            DATE_FORMAT(`msg_time`, '%H:%i:%s') AS msg_time,
+            `num`,
+            `msg`,
+            `status`,
+            `alarm`
         FROM $mTable
         WHERE
             num = ?
@@ -175,12 +176,21 @@ function get_object_archiv($oRec, $sID, $oNum, $zTime, $ListSize, $ListLimit)
     while ($oRow = $result->fetch_assoc()) {
 
         $mID = intval($oRow['id']);
+        $mStatus = intval($oRow['status']);
         $mTime = htmlspecialchars($oRow['msg_time']);
         $msg = htmlspecialchars($oRow['msg']);
         $isAlarm = intval($oRow['alarm']) === 1;
 
         // 🎨 Динамични класове
-        $bgClass = ($mID == $sID) ? 'bg-danger text-white bg-opacity-75 fw-bold' : ($isAlarm ? 'bg-warning text-bg-warning bg-opacity-75' : 'bg-dark text-white');
+        if ($mStatus > 399 && $mStatus < 411) {
+            $bgClass = 'bg-white text-dark fw-bold';
+        } elseif ($mID == $sID) {
+            $bgClass = 'bg-danger text-white bg-opacity-75 fw-bold';
+        } elseif ($isAlarm) {
+            $bgClass = 'bg-warning text-bg-warning bg-opacity-75';
+        } else {
+            $bgClass = 'bg-dark text-white';
+        }
 
         $html .= '
             <div class="row p-0 pb-1 m-0 border-bottom border-secondary small ' . $bgClass . '">
