@@ -963,6 +963,8 @@ function loadArchiveContent() {
 /* ============================================================
    HTML Marker (Leaflet версия) – запазено име HtmlMarker
    ============================================================ */
+let fallbackLine = null;
+let lastRouteOrigin = null;
 
 /* =========================
    HtmlMarker (Leaflet divIcon wrapper) + плавен визуален клас
@@ -1107,6 +1109,11 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
     }).addTo(map);
 
     el._localMap = map;
+    setTimeout(() => {
+        try {
+            map.invalidateSize(true);
+        } catch (e) {}
+    }, 350);
     el._objectPos = objectPos;
 
     // Object (static) marker
@@ -1124,20 +1131,41 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
 
     // Create routing control (initially hidden - CSS .leaflet-routing-container {display: none})
     el._routeControl = L.Routing.control({
-        waypoints: [],
+        waypoints: [
+            L.latLng(objectPos.lat, objectPos.lng),
+            L.latLng(objectPos.lat, objectPos.lng) // временен placeholder
+        ],
         router: L.Routing.osrmv1({
-            serviceUrl: 'https://router.project-osrm.org/route/v1' // change for production
+            serviceUrl: 'https://router.project-osrm.org/route/v1'
         }),
-        show: false, // hide the default itinerary container
+        show: false,
         addWaypoints: false,
         draggableWaypoints: false,
         fitSelectedRoute: false,
         routeWhileDragging: false,
-        createMarker: function() { return null; }, // we use our own markers
+        createMarker: () => null,
         lineOptions: {
             styles: [{ color: '#00bcd4', opacity: 0.9, weight: 5 }]
         }
     }).addTo(map);
+
+    // 🔹 fallback при routing error
+    el._routeControl.on('routingerror', function () {
+        if (!el._lastCarLatLng || !objectPos) return;
+        console.warn('OSRM failed → using fallback line');
+        drawFallbackLine(
+            L.latLng(el._lastCarLatLng.lat, el._lastCarLatLng.lng),
+            L.latLng(objectPos.lat, objectPos.lng)
+        );
+    });
+
+    // 🔹 премахване на fallback, ако маршрут се намери
+    el._routeControl.on('routesfound', function () {
+        if (fallbackLine) {
+            map.removeLayer(fallbackLine);
+            fallbackLine = null;
+        }
+    });
 
     // helper: fit bounds to show both object and car (but don't force zoom if already showing)
     function fitToShowBoth() {
@@ -1157,15 +1185,28 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
         const origin = { lat: parseFloat(lat), lng: parseFloat(lng) };
         const now = Date.now();
 
-        if (el._lastRouteOrigin) {
-            const dist = haversineDistanceMeters(origin, el._lastRouteOrigin);
-            if (dist < el._routeRecalcMinDistance && (now - el._lastRouteTs) < el._routeRecalcMinInterval) {
-                // skip recalculation
-                return;
+        // 🔑 FORCE first route calculation
+        if (!el._lastRouteOrigin) {
+            try {
+                el._routeControl.setWaypoints([
+                    L.latLng(origin.lat, origin.lng),
+                    L.latLng(objectPos.lat, objectPos.lng)
+                ]);
+                el._lastRouteOrigin = origin;
+                el._lastRouteTs = now;
+            } catch (e) {
+                console.warn('Initial route setWaypoints error', e);
             }
+            return;
         }
 
-        // update waypoints (this triggers route calculation)
+        // normal guard after first route
+        const dist = haversineDistanceMeters(origin, el._lastRouteOrigin);
+        if (dist < el._routeRecalcMinDistance &&
+            (now - el._lastRouteTs) < el._routeRecalcMinInterval) {
+            return;
+        }
+
         try {
             el._routeControl.setWaypoints([
                 L.latLng(origin.lat, origin.lng),
@@ -1227,6 +1268,7 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
             el._lastCarLatLng = pos;
 
             // setup initial route
+            lastRouteOrigin = pos; // запомним текущата позиция за fallback
             try { el._recalcRouteFrom(pos.lat, pos.lng); } catch (e) {}
             // fit view
             fitToShowBoth();
@@ -1326,6 +1368,28 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
 }
 
 /* ------------------------
+    функция за fallback линия
+   ------------------------ */
+function drawFallbackLine(fromLatLng, toLatLng) {
+    if (!map) return;
+
+    if (fallbackLine) {
+        fallbackLine.setLatLngs([fromLatLng, toLatLng]);
+        return;
+    }
+
+    fallbackLine = L.polyline(
+        [fromLatLng, toLatLng],
+        {
+            color: '#ff9800',
+            weight: 4,
+            opacity: 0.9,
+            dashArray: '6,6'
+        }
+    ).addTo(map);
+}
+
+/* ------------------------
    openMapModal(modalId, oLat, oLan, idUser)
    ------------------------ */
 function openMapModal(modalId, oLat, oLan, idUser) {
@@ -1353,6 +1417,12 @@ function openMapModal(modalId, oLat, oLan, idUser) {
     }
 
     modalEl[handlerName] = function() {
+        if (fallbackLine) {
+            fallbackLine.remove();
+            fallbackLine = null;
+        }
+        lastRouteOrigin = null;
+
         cleanupMapContainer(containerId);
         try {
             if (typeof updateInterval !== 'undefined') { clearInterval(updateInterval); updateInterval = null; }
