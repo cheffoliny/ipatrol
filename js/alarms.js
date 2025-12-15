@@ -1151,25 +1151,23 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
     }).addTo(map);
 
     // 🔹 fallback при routing error
-    el._routeControl.on('routeselected', function (e) {
-        if (!e.route || !e.route.coordinates || !e.route.coordinates.length) {
-            if (!el._lastCarLatLng) return;
+    el._routeControl.on('routingerror', function (e) {
+        if (!el._lastCarLatLng) return;
 
-            console.warn('Empty route → fallback line');
+        console.warn('OSRM routing failed → fallback line', e);
 
-            drawFallbackLine(
-                el,
-                L.latLng(el._lastCarLatLng.lat, el._lastCarLatLng.lng),
-                L.latLng(objectPos.lat, objectPos.lng)
-            );
-        }
+        drawFallbackLine(
+            el,
+            L.latLng(el._lastCarLatLng.lat, el._lastCarLatLng.lng),
+            L.latLng(objectPos.lat, objectPos.lng)
+        );
     });
 
     // 🔹 премахване на fallback, ако маршрут се намери
     el._routeControl.on('routesfound', function () {
-        if (fallbackLine) {
-            map.removeLayer(fallbackLine);
-            fallbackLine = null;
+        if (el._fallbackLine) {
+            el._localMap.removeLayer(el._fallbackLine);
+            el._fallbackLine = null;
         }
     });
 
@@ -1424,9 +1422,10 @@ function openMapModal(modalId, oLat, oLan, idUser) {
     }
 
     modalEl[handlerName] = function() {
-        if (el && el._fallbackLine) {
-            el._fallbackLine.remove();
-            el._fallbackLine = null;
+        const mapEl = document.getElementById(containerId);
+        if (mapEl && mapEl._fallbackLine) {
+            mapEl._fallbackLine.remove();
+            mapEl._fallbackLine = null;
         }
 
         cleanupMapContainer(containerId);
