@@ -1062,6 +1062,8 @@ function cleanupMapContainer(containerId) {
     el._lastRouteOrigin = null;
     el._lastRouteTs = 0;
     el.classList.remove('ip-map-instance');
+
+    removeDistanceLabel(el);
 }
 
 /* ------------------------
@@ -1070,6 +1072,7 @@ function cleanupMapContainer(containerId) {
    ------------------------ */
 function initMapUnique(containerId, oLat, oLan, idUser) {
     const el = document.getElementById(containerId);
+
     if (!el) return;
 
     // if map already exists for this container - reuse (do not recreate), but clear old markers/routes
@@ -1108,7 +1111,11 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
 
     el._localMap = map;
     el._fallbackLine = null;
+    el._distanceLabel = null;
     el._lastRouteOrigin = null;
+
+    el._routingProvider = 'osrm'; // osrm | ors | fallback
+    el._orsRouteLine = null;
 
     setTimeout(() => {
         try {
@@ -1151,20 +1158,47 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
     }).addTo(map);
 
     // 🔹 fallback при routing error
-    el._routeControl.on('routingerror', function (e) {
+    el._routeControl.on('routingerror', async function () {
+        if (el._routingProvider !== 'osrm') return;
         if (!el._lastCarLatLng) return;
 
-        console.warn('OSRM routing failed → fallback line', e);
+        const from = {
+            lat: el._lastCarLatLng.lat,
+            lng: el._lastCarLatLng.lng
+        };
 
-        drawFallbackLine(
-            el,
-            L.latLng(el._lastCarLatLng.lat, el._lastCarLatLng.lng),
-            L.latLng(objectPos.lat, objectPos.lng)
-        );
+        const to = objectPos;
+
+        console.warn('OSRM failed → trying ORS');
+
+        try {
+            const res = await fetchRouteORS(from, to);
+            el._routingProvider = 'ors';
+            drawORSRoute(el, res.coords, res.meters);
+            return;
+        } catch (e) {
+            console.warn('ORS failed → fallback');
+        }
+
+        el._routingProvider = 'fallback';
+        drawFallbackLine(el, L.latLng(from.lat, from.lng), L.latLng(to.lat, to.lng));
     });
 
+
     // 🔹 премахване на fallback, ако маршрут се намери
-    el._routeControl.on('routesfound', function () {
+    el._routeControl.on('routesfound', function (e) {
+        el._routingProvider = 'osrm';
+
+        if (!e.routes || !e.routes[0]) return;
+
+        const route = e.routes[0];
+        const meters = route.summary.totalDistance;
+
+        const midIndex = Math.floor(route.coordinates.length / 2);
+        const midPoint = route.coordinates[midIndex];
+
+        showDistanceLabel(el, L.latLng(midPoint.lat, midPoint.lng), meters);
+
         if (el._fallbackLine) {
             el._localMap.removeLayer(el._fallbackLine);
             el._fallbackLine = null;
@@ -1187,6 +1221,12 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
 
     // route recalculation with guards
     el._recalcRouteFrom = function(lat, lng) {
+
+        if (el._routingProvider !== 'osrm') {
+            clearAllRoutes(el);
+            el._routingProvider = 'osrm';
+        }
+
         const origin = { lat: parseFloat(lat), lng: parseFloat(lng) };
         const now = Date.now();
 
@@ -1272,8 +1312,6 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
             el._carMarker = new HtmlMarker(pos, carHtml, map);
             el._lastCarLatLng = pos;
 
-            // setup initial route
-            lastRouteOrigin = pos; // запомним текущата позиция за fallback
             try { el._recalcRouteFrom(pos.lat, pos.lng); } catch (e) {}
             // fit view
             fitToShowBoth();
@@ -1376,6 +1414,15 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
     функция за fallback линия
    ------------------------ */
 function drawFallbackLine(el, fromLatLng, toLatLng) {
+
+    const meters = haversineDistanceMeters(fromLatLng, toLatLng);
+    const mid = L.latLng(
+        (fromLatLng.lat + toLatLng.lat) / 2,
+        (fromLatLng.lng + toLatLng.lng) / 2
+    );
+
+    showDistanceLabel(el, mid, meters, 'fallback');
+
     if (!el || !el._localMap) return;
 
     if (el._fallbackLine) {
@@ -1426,6 +1473,7 @@ function openMapModal(modalId, oLat, oLan, idUser) {
         if (mapEl && mapEl._fallbackLine) {
             mapEl._fallbackLine.remove();
             mapEl._fallbackLine = null;
+            removeDistanceLabel(mapEl);
         }
 
         cleanupMapContainer(containerId);
@@ -1461,6 +1509,96 @@ window.updateCarFromWebView = function(lat, lng, speed, bearing, accuracy, altit
     }
 };
 
+function showDistanceLabel(el, latlng, meters, source = 'route') {
+    if (!el || !el._localMap) return;
+
+    const text =
+        meters >= 1000
+            ? (meters / 1000).toFixed(2) + ' km'
+            : Math.round(meters) + ' m';
+
+    if (!el._distanceLabel) {
+        el._distanceLabel = L.tooltip({
+            permanent: true,
+            direction: 'center',
+            className: 'distance-label',
+            offset: [0, 0]
+        })
+            .setContent(text)
+            .setLatLng(latlng)
+            .addTo(el._localMap);
+    } else {
+        el._distanceLabel
+            .setContent(text)
+            .setLatLng(latlng);
+    }
+}
+
+function removeDistanceLabel(el) {
+    if (el && el._distanceLabel && el._localMap) {
+        try {
+            el._localMap.removeLayer(el._distanceLabel);
+        } catch (e) {}
+        el._distanceLabel = null;
+    }
+}
+
+function clearAllRoutes(el) {
+    if (!el || !el._localMap) return;
+
+    if (el._fallbackLine) {
+        el._localMap.removeLayer(el._fallbackLine);
+        el._fallbackLine = null;
+    }
+
+    if (el._orsRouteLine) {
+        el._localMap.removeLayer(el._orsRouteLine);
+        el._orsRouteLine = null;
+    }
+
+    removeDistanceLabel(el);
+}
+
+async function fetchRouteORS(from, to) {
+    const r = await fetch(
+        'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
+        {
+            method: 'POST',
+            headers: {
+                'Authorization': 'YOUR_ORS_API_KEY',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                coordinates: [
+                    [from.lng, from.lat],
+                    [to.lng, to.lat]
+                ]
+            })
+        }
+    );
+
+    if (!r.ok) throw new Error('ORS routing failed');
+
+    const j = await r.json();
+
+    return {
+        coords: j.features[0].geometry.coordinates.map(c => [c[1], c[0]]),
+        meters: j.features[0].properties.summary.distance
+    };
+}
+
+function drawORSRoute(el, coords, meters) {
+    clearAllRoutes(el);
+
+    el._orsRouteLine = L.polyline(coords, {
+        color: '#4caf50',
+        weight: 5,
+        opacity: 0.9
+    }).addTo(el._localMap);
+
+    const mid = coords[Math.floor(coords.length / 2)];
+    showDistanceLabel(el, L.latLng(mid[0], mid[1]), meters);
+}
 
 //class HtmlMarker {
 //    constructor(position, html, mapInstance) {
