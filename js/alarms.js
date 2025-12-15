@@ -963,8 +963,6 @@ function loadArchiveContent() {
 /* ============================================================
    HTML Marker (Leaflet версия) – запазено име HtmlMarker
    ============================================================ */
-let fallbackLine = null;
-let lastRouteOrigin = null;
 
 /* =========================
    HtmlMarker (Leaflet divIcon wrapper) + плавен визуален клас
@@ -1109,6 +1107,9 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
     }).addTo(map);
 
     el._localMap = map;
+    el._fallbackLine = null;
+    el._lastRouteOrigin = null;
+
     setTimeout(() => {
         try {
             map.invalidateSize(true);
@@ -1150,14 +1151,20 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
     }).addTo(map);
 
     // 🔹 fallback при routing error
-    el._routeControl.on('routingerror', function () {
-        if (!el._lastCarLatLng || !objectPos) return;
-        console.warn('OSRM failed → using fallback line');
-        drawFallbackLine(
-            L.latLng(el._lastCarLatLng.lat, el._lastCarLatLng.lng),
-            L.latLng(objectPos.lat, objectPos.lng)
-        );
+    el._routeControl.on('routeselected', function (e) {
+        if (!e.route || !e.route.coordinates || !e.route.coordinates.length) {
+            if (!el._lastCarLatLng) return;
+
+            console.warn('Empty route → fallback line');
+
+            drawFallbackLine(
+                el,
+                L.latLng(el._lastCarLatLng.lat, el._lastCarLatLng.lng),
+                L.latLng(objectPos.lat, objectPos.lng)
+            );
+        }
     });
+
 
     // 🔹 премахване на fallback, ако маршрут се намери
     el._routeControl.on('routesfound', function () {
@@ -1370,15 +1377,15 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
 /* ------------------------
     функция за fallback линия
    ------------------------ */
-function drawFallbackLine(fromLatLng, toLatLng) {
-    if (!map) return;
+function drawFallbackLine(el, fromLatLng, toLatLng) {
+    if (!el || !el._localMap) return;
 
-    if (fallbackLine) {
-        fallbackLine.setLatLngs([fromLatLng, toLatLng]);
+    if (el._fallbackLine) {
+        el._fallbackLine.setLatLngs([fromLatLng, toLatLng]);
         return;
     }
 
-    fallbackLine = L.polyline(
+    el._fallbackLine = L.polyline(
         [fromLatLng, toLatLng],
         {
             color: '#ff9800',
@@ -1386,7 +1393,7 @@ function drawFallbackLine(fromLatLng, toLatLng) {
             opacity: 0.9,
             dashArray: '6,6'
         }
-    ).addTo(map);
+    ).addTo(el._localMap);
 }
 
 /* ------------------------
@@ -1417,11 +1424,10 @@ function openMapModal(modalId, oLat, oLan, idUser) {
     }
 
     modalEl[handlerName] = function() {
-        if (fallbackLine) {
-            fallbackLine.remove();
-            fallbackLine = null;
+        if (el && el._fallbackLine) {
+            el._fallbackLine.remove();
+            el._fallbackLine = null;
         }
-        lastRouteOrigin = null;
 
         cleanupMapContainer(containerId);
         try {
