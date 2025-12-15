@@ -1165,7 +1165,6 @@ function initMapUnique(containerId, oLat, oLan, idUser) {
         }
     });
 
-
     // 🔹 премахване на fallback, ако маршрут се намери
     el._routeControl.on('routesfound', function () {
         if (fallbackLine) {
