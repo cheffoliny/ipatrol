@@ -182,7 +182,7 @@ function get_object_archiv($oRec, $sID, $oNum, $zTime, $ListSize, $ListLimit)
         $isAlarm = intval($oRow['alarm']) === 1;
 
         // 🎨 Динамични класове
-        if ($mStatus > 399 && $mStatus < 411) {
+        if ($mStatus > 399 && $mStatus < 411 && $isAlarm == 1) {
             $bgClass = 'bg-white text-dark fw-bold';
         } elseif ($mID == $sID) {
             $bgClass = 'bg-danger text-white bg-opacity-75 fw-bold';
