@@ -187,7 +187,7 @@ function get_object_archiv($oRec, $sID, $oNum, $zTime, $ListSize, $ListLimit)
         } elseif ($mID == $sID) {
             $bgClass = 'bg-danger text-white bg-opacity-75 fw-bold';
         } elseif ($isAlarm) {
-            $bgClass = 'bg-warning text-bg-warning bg-opacity-75';
+            $bgClass = 'bg-warning text-bg-warning bg-opacity-75 fw-bold';
         } else {
             $bgClass = 'bg-dark text-white';
         }
