@@ -23,9 +23,7 @@ $oID   = intval($_POST['oID']);
 $offID = intval($_POST['offID']);
 //$cName = htmlspecialchars(mysqli_real_escape_string($db_sod, $_POST['cName']));
 
-$cName = $_POST['cName'] ?? '';
-$cName = trim($cName);
-$cName = preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $cName);
+$cName = mysqli_real_escape_string($db_sod, $_POST['cName']);
 
 $userID = intval($_SESSION['user_id']);
 
