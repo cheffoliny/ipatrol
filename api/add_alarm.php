@@ -19,7 +19,7 @@ if (!isset($_POST['oID'], $_POST['offID'], $_POST['cName'])) {
 
 $oID   = intval($_POST['oID']);
 $offID = intval($_POST['offID']);
-$cName = mysqli_real_escape_string($_POST['cName']);
+$cName = mysqli_real_escape_string($db_sod, $_POST['cName']);
 $userID = intval($_SESSION['user_id']);
 
 list($maxID, $mTable) = get_max_id_archiv();

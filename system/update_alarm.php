@@ -3,8 +3,6 @@ define('INCLUDE_CHECK', true);
 require_once '../session_init.php';
 require_once '../config.php';
 
-global $db_sod;
-
 if (!isset($_SESSION['user_id'])) {
     http_response_code(403);
     exit('Access denied.');
@@ -30,3 +28,4 @@ if (mysqli_query($db_sod, $query)) {
 } else {
     echo json_encode(['status' => 'error', 'msg' => mysqli_error($db_sod)]);
 }
+?>
