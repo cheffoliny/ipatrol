@@ -18,9 +18,9 @@ global $db_sod;
 $aQuery = "
     SELECT
         swkm.id AS aID,
-        REPLACE(swkm.obj_name   , '\"', ' ') AS oName,
-        REPLACE(o.address       , '\"', ' ') AS oAddr,
-        REPLACE(o.operativ_info , '\"', ' ') AS oInfo,
+        REGEXP_REPLACE(swkm.obj_name, '[\"'']', '') AS oName,
+        REGEXP_REPLACE(o.address, '[\"'']', '') AS oAddr,
+        REGEXP_REPLACE(o.operativ_info, '[\"'']', '') AS oInfo,
         swkm.stop_play AS stopPlay, 
         DATE_FORMAT(swkm.alarm_time,    '%H:%i:%s'          ) AS aTime,
         DATE_FORMAT(swkm.send_time,     '%d.%m.%Y %H:%i:%s' ) AS sTime,

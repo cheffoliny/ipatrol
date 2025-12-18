@@ -5,6 +5,8 @@ require_once '../session_init.php';
 require_once '../config.php';
 require_once '../includes/functions.php';
 
+global $db_sod;
+
 header('Content-Type: application/json; charset=utf-8');
 
 if (!isset($_SESSION['user_id'])) {
@@ -19,7 +21,12 @@ if (!isset($_POST['oID'], $_POST['offID'], $_POST['cName'])) {
 
 $oID   = intval($_POST['oID']);
 $offID = intval($_POST['offID']);
-$cName = mysqli_real_escape_string($db_sod, $_POST['cName']);
+//$cName = htmlspecialchars(mysqli_real_escape_string($db_sod, $_POST['cName']));
+
+$cName = $_POST['cName'] ?? '';
+$cName = trim($cName);
+$cName = preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $cName);
+
 $userID = intval($_SESSION['user_id']);
 
 list($maxID, $mTable) = get_max_id_archiv();

@@ -1,7 +1,8 @@
 <?php
+
 require_once 'custom_view.php';
 
-$str_bg_color = isset( $bg_color ) ? $bg_color : ' bg-dark '
+$str_bg_color = isset($bg_color) ? $bg_color : ' bg-dark ';
 
 ?>
 <div class="sidebar d-flex flex-column justify-content-between <?= $str_bg_color ?> text-white p-1" style="width: 200px;">
