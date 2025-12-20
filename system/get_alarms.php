@@ -18,9 +18,9 @@ global $db_sod;
 $aQuery = "
     SELECT
         swkm.id AS aID,
-        REPLACE(swkm.obj_name   , '\"', ' ') AS oName,
-        REPLACE(o.address       , '\"', ' ') AS oAddr,
-        REPLACE(o.operativ_info , '\"', ' ') AS oInfo,
+        REPLACE(REPLACE(swkm.obj_name,  '\"', ''), '''', '' ) AS oName,
+        REPLACE(REPLACE(o.address,      '\"', ''), '''', '' ) AS oAddr,
+        REPLACE(REPLACE(o.operativ_info,'\"', ''), '''', '' ) AS oInfo,
         swkm.stop_play AS stopPlay, 
         DATE_FORMAT(swkm.alarm_time,    '%H:%i:%s'          ) AS aTime,
         DATE_FORMAT(swkm.send_time,     '%d.%m.%Y %H:%i:%s' ) AS sTime,
@@ -58,7 +58,11 @@ if (!$num_aRows) {
 } else {
     while ($aRow = mysqli_fetch_assoc($aResult)) {
         $aID   = $aRow['aID'];
-        $oName = htmlspecialchars($aRow['oName']);
+
+        $oName = htmlspecialchars($aRow['oName'], ENT_QUOTES);
+        $oAddr = htmlspecialchars($aRow['oAddr'], ENT_QUOTES);
+        $oInfo = htmlspecialchars($aRow['oInfo'], ENT_QUOTES);
+
         $aTime = $aRow['aTime'];
         $gTime = $aRow['gTime'];
         $rawG  = $aRow['rawGTime'];
@@ -67,8 +71,6 @@ if (!$num_aRows) {
         $endUnix    = $aRow['endUnix'   ];
         $reasonUnix = $aRow['reasonUnix'];
 
-        $oAddr = htmlspecialchars($aRow['oAddr']);
-        $oInfo = htmlspecialchars($aRow['oInfo']);
         $stopPlay = intval($aRow['stopPlay']);
 
         // --- Определяне на цвета/indicator ---
